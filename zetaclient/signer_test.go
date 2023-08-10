@@ -1,7 +1,7 @@
 package zetaclient
 
 import (
-	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/ethereum/go-ethereum/crypto"
 	. "gopkg.in/check.v1"
 )
@@ -19,7 +19,7 @@ func (s *SignerSuite) SetUpTest(c *C) {
 	skHex := "7b8507ba117e069f4a3f456f505276084f8c92aee86ac78ae37b4d1801d35fa8"
 	privateKey, err := crypto.HexToECDSA(skHex)
 	pkBytes := crypto.FromECDSAPub(&privateKey.PublicKey)
-	pk, err := btcec.ParsePubKey(pkBytes, btcec.S256())
+	pk, err := btcec.ParsePubKey(pkBytes)
 	c.Assert(err, IsNil)
 	c.Logf("pubkey: %d", len(pkBytes))
 	c.Logf("pk: %d", len(pk.SerializeCompressed()))

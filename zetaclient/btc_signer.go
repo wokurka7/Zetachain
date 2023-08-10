@@ -3,18 +3,21 @@ package zetaclient
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/big"
 	"math/rand"
 	"time"
 
-	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/rs/zerolog"
+
 	"github.com/zeta-chain/zetacore/common"
 	"github.com/zeta-chain/zetacore/x/crosschain/types"
 	zetaObserverModuleTypes "github.com/zeta-chain/zetacore/x/observer/types"
@@ -46,14 +49,27 @@ func NewBTCSigner(tssSigner TSSSigner, rpcClient *rpcclient.Client, logger zerol
 }
 
 // SignWithdrawTx receives utxos sorted by value, amount in BTC, feeRate in BTC per Kb
-func (signer *BTCSigner) SignWithdrawTx(to *btcutil.AddressWitnessPubKeyHash, amount float64, gasPrice *big.Int, btcClient *BitcoinChainClient, height uint64, nonce uint64, chain *common.Chain) (*wire.MsgTx, error) {
+func (signer *BTCSigner) SignWithdrawTx(
+	to *btcutil.AddressWitnessPubKeyHash,
+	amount float64,
+	gasPrice *big.Int,
+	btcClient *BitcoinChainClient,
+	height uint64,
+	nonce uint64,
+	chain *common.Chain,
+) (*wire.MsgTx, error) {
 	estimateFee := 0.0001 // 10,000 sats, should be good for testnet
 	minFee := 0.00005
 	nonceMark := NonceMarkAmount(nonce)
 
 	// select N UTXOs to cover the total expense
 	tssAddress := signer.tssSigner.BTCAddressWitnessPubkeyHash().EncodeAddress()
-	prevOuts, total, err := btcClient.SelectUTXOs(amount+estimateFee+float64(nonceMark)*1e-8, maxNoOfInputsPerTx, nonce, tssAddress)
+	prevOuts, total, err := btcClient.SelectUTXOs(
+		amount+estimateFee+float64(nonceMark)*1e-8,
+		maxNoOfInputsPerTx,
+		nonce,
+		tssAddress,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -121,8 +137,12 @@ func (signer *BTCSigner) SignWithdrawTx(to *btcutil.AddressWitnessPubKeyHash, am
 	txOut2 := wire.NewTxOut(amountSatoshis, pkScript)
 	tx.AddTxOut(txOut2)
 
+	prevFetcher := txscript.NewCannedPrevOutputFetcher(
+		txOut.PkScript, txOut.Value,
+	)
+
 	// sign the tx
-	sigHashes := txscript.NewTxSigHashes(tx)
+	sigHashes := txscript.NewTxSigHashes(tx, prevFetcher)
 	witnessHashes := make([][]byte, len(tx.TxIn))
 	for ix := range tx.TxIn {
 		amt, err := getSatoshis(prevOuts[ix].Amount)
@@ -149,12 +169,16 @@ func (signer *BTCSigner) SignWithdrawTx(to *btcutil.AddressWitnessPubKeyHash, am
 
 	for ix := range tx.TxIn {
 		sig65B := sig65Bs[ix]
-		R := big.NewInt(0).SetBytes(sig65B[:32])
-		S := big.NewInt(0).SetBytes(sig65B[32:64])
-		sig := btcec.Signature{
-			R: R,
-			S: S,
+
+		var r, s btcec.ModNScalar
+		if overflow := r.SetByteSlice(sig65B[:32]); overflow {
+			return nil, errors.New("r: byte slice overflow")
 		}
+		if overflow := s.SetByteSlice(sig65B[32:64]); overflow {
+			return nil, errors.New("s: byte slice overflow")
+		}
+
+		sig := ecdsa.NewSignature(&r, &s)
 
 		pkCompressed := signer.tssSigner.PubKeyCompressedBytes()
 		hashType := txscript.SigHashAll
@@ -180,7 +204,14 @@ func (signer *BTCSigner) Broadcast(signedTx *wire.MsgTx) error {
 	return err
 }
 
-func (signer *BTCSigner) TryProcessOutTx(send *types.CrossChainTx, outTxMan *OutTxProcessorManager, outTxID string, chainclient ChainClient, zetaBridge *ZetaCoreBridge, height uint64) {
+func (signer *BTCSigner) TryProcessOutTx(
+	send *types.CrossChainTx,
+	outTxMan *OutTxProcessorManager,
+	outTxID string,
+	chainclient ChainClient,
+	zetaBridge *ZetaCoreBridge,
+	height uint64,
+) {
 	defer func() {
 		if err := recover(); err != nil {
 			signer.logger.Error().Msgf("BTC TryProcessOutTx: %s, caught panic error: %v", send.Index, err)

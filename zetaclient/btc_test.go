@@ -3,23 +3,23 @@ package zetaclient
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
-	"math/big"
 	"testing"
 
-	"github.com/zeta-chain/zetacore/common"
-
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
-
-	"github.com/stretchr/testify/suite"
-
-	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
+	secp "github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/stretchr/testify/suite"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+
+	"github.com/zeta-chain/zetacore/common"
 )
 
 type BTCSignTestSuite struct {
@@ -36,13 +36,14 @@ const (
 )
 
 func (suite *BTCSignTestSuite) SetupTest() {
-	wif, _ := btcutil.DecodeWIF(pk)
-	privateKey := wif.PrivKey
 	//skHex := "7b8507ba117e069f4a3f456f505276084f8c92aee86ac78ae37b4d1801d35fa8"
 	//privateKey, err := crypto.HexToECDSA(skHex)
 	//pkBytes := crypto.FromECDSAPub(&privateKey.PublicKey)
 	//suite.T().Logf("pubkey: %d", len(pkBytes))
 	//suite.Require().NoError(err)
+
+	wif, _ := btcutil.DecodeWIF(pk)
+	privateKey := secp.PrivateKey(*wif.PrivKey)
 
 	suite.testSigner = &TestSigner{ // fake TSS
 		PrivKey: privateKey.ToECDSA(),
@@ -117,14 +118,27 @@ func buildTX() (*wire.MsgTx, *txscript.TxSigHashes, int, int64, []byte, *btcec.P
 	txOut := wire.NewTxOut(47000, pkScript)
 	tx.AddTxOut(txOut)
 
-	txSigHashes := txscript.NewTxSigHashes(tx)
+	prevFetcher := txscript.NewCannedPrevOutputFetcher(
+		txOut.PkScript, txOut.Value,
+	)
 
-	privKey := btcec.PrivateKey(*wif.PrivKey.ToECDSA())
+	txSigHashes := txscript.NewTxSigHashes(tx, prevFetcher)
 
-	return tx, txSigHashes, int(0), int64(65236), pkScript, &privKey, wif.CompressPubKey, nil
+	privKey := *wif.PrivKey
+
+	return tx, txSigHashes, 0, int64(65236), pkScript, &privKey, wif.CompressPubKey, nil
 }
 
-func getWalletTX(tx *wire.MsgTx, sigHashes *txscript.TxSigHashes, idx int, amt int64, subscript []byte, hashType txscript.SigHashType, privKey *btcec.PrivateKey, compress bool) (string, error) {
+func getWalletTX(
+	tx *wire.MsgTx,
+	sigHashes *txscript.TxSigHashes,
+	idx int,
+	amt int64,
+	subscript []byte,
+	hashType txscript.SigHashType,
+	privKey *btcec.PrivateKey,
+	compress bool,
+) (string, error) {
 	txWitness, err := txscript.WitnessSignature(tx, sigHashes, idx, amt, subscript, hashType, privKey, compress)
 	if err != nil {
 		return "", err
@@ -146,16 +160,21 @@ func getTSSTX(tss *TestSigner, tx *wire.MsgTx, sigHashes *txscript.TxSigHashes, 
 		return "", err
 	}
 
+	// create signature
 	sig65B, err := tss.Sign(witnessHash, 10, &common.Chain{})
-	R := big.NewInt(0).SetBytes(sig65B[:32])
-	S := big.NewInt(0).SetBytes(sig65B[32:64])
-	sig := btcec.Signature{
-		R: R,
-		S: S,
-	}
 	if err != nil {
 		return "", err
 	}
+
+	var r, s btcec.ModNScalar
+	if overflow := r.SetByteSlice(sig65B[:32]); overflow {
+		return "", errors.New("r: byte slice overflow")
+	}
+	if overflow := s.SetByteSlice(sig65B[32:64]); overflow {
+		return "", errors.New("s: byte slice overflow")
+	}
+
+	sig := ecdsa.NewSignature(&r, &s)
 
 	pkCompressed := tss.PubKeyCompressedBytes()
 	txWitness := wire.TxWitness{append(sig.Serialize(), byte(hashType)), pkCompressed}

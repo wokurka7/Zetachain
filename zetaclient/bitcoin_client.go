@@ -4,14 +4,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-
-	"cosmossdk.io/math"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/pkg/errors"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
-
 	math2 "math"
 	"math/big"
 	"os"
@@ -21,10 +13,17 @@ import (
 	"sync/atomic"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcjson"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcutil"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+
 	"github.com/zeta-chain/zetacore/common"
 	"github.com/zeta-chain/zetacore/zetaclient/config"
 	metricsPkg "github.com/zeta-chain/zetacore/zetaclient/metrics"

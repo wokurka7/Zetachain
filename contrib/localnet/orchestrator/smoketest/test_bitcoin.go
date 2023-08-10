@@ -10,7 +10,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -45,7 +45,7 @@ func (sm *SmokeTest) TestBitcoinSetup() {
 	if err != nil {
 		panic(err)
 	}
-	sk, _ := btcec.PrivKeyFromBytes(btcec.S256(), skBytes)
+	sk, _ := btcec.PrivKeyFromBytes(skBytes)
 	privkeyWIF, err := btcutil.NewWIF(sk, &chaincfg.RegressionNetParams, true)
 	if err != nil {
 		panic(err)

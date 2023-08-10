@@ -3,11 +3,12 @@ package zetaclient
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
 	"sort"
 	"sync"
 	"testing"
 
-	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -54,7 +55,7 @@ func (s *BTCSignerSuite) TestP2PH(c *C) {
 		"d4f8720ee63e502ee2869afab7de234b80c")
 	c.Assert(err, IsNil)
 
-	privKey, pubKey := btcec.PrivKeyFromBytes(btcec.S256(), privKeyBytes)
+	privKey, pubKey := btcec.PrivKeyFromBytes(privKeyBytes)
 	pubKeyHash := btcutil.Hash160(pubKey.SerializeCompressed())
 	addr, err := btcutil.NewAddressPubKeyHash(pubKeyHash, &chaincfg.RegressionNetParams)
 	c.Assert(err, IsNil)
@@ -96,20 +97,39 @@ func (s *BTCSignerSuite) TestP2PH(c *C) {
 	// Notice that the script database parameter is nil here since it isn't
 	// used.  It must be specified when pay-to-script-hash transactions are
 	// being signed.
-	sigScript, err := txscript.SignTxOutput(&chaincfg.MainNetParams,
-		redeemTx, 0, originTx.TxOut[0].PkScript, txscript.SigHashAll,
-		txscript.KeyClosure(lookupKey), nil, nil)
+	sigScript, err := txscript.SignTxOutput(
+		&chaincfg.MainNetParams,
+		redeemTx,
+		0,
+		originTx.TxOut[0].PkScript,
+		txscript.SigHashAll,
+		txscript.KeyClosure(lookupKey),
+		nil,
+		nil,
+	)
 	c.Assert(err, IsNil)
 
 	redeemTx.TxIn[0].SignatureScript = sigScript
+
+	prevFetcher := txscript.NewCannedPrevOutputFetcher(
+		txOut.PkScript, txOut.Value,
+	)
 
 	// Prove that the transaction has been validly signed by executing the
 	// script pair.
 	flags := txscript.ScriptBip16 | txscript.ScriptVerifyDERSignatures |
 		txscript.ScriptStrictMultiSig |
 		txscript.ScriptDiscourageUpgradableNops
-	vm, err := txscript.NewEngine(originTx.TxOut[0].PkScript, redeemTx, 0,
-		flags, nil, nil, -1)
+	vm, err := txscript.NewEngine(
+		originTx.TxOut[0].PkScript,
+		redeemTx,
+		0,
+		flags,
+		nil,
+		nil,
+		-1,
+		prevFetcher,
+	)
 	c.Assert(err, IsNil)
 
 	err = vm.Execute()
@@ -125,7 +145,7 @@ func (s *BTCSignerSuite) TestP2WPH(c *C) {
 		"d4f8720ee63e502ee2869afab7de234b80c")
 	c.Assert(err, IsNil)
 
-	privKey, pubKey := btcec.PrivKeyFromBytes(btcec.S256(), privKeyBytes)
+	privKey, pubKey := btcec.PrivKeyFromBytes(privKeyBytes)
 	pubKeyHash := btcutil.Hash160(pubKey.SerializeCompressed())
 	//addr, err := btcutil.NewAddressPubKeyHash(pubKeyHash, &chaincfg.RegressionNetParams)
 	addr, err := btcutil.NewAddressWitnessPubKeyHash(pubKeyHash, &chaincfg.RegressionNetParams)
@@ -158,7 +178,12 @@ func (s *BTCSignerSuite) TestP2WPH(c *C) {
 	// but for this example don't bother.
 	txOut = wire.NewTxOut(0, nil)
 	redeemTx.AddTxOut(txOut)
-	txSigHashes := txscript.NewTxSigHashes(redeemTx)
+
+	prevFetcher := txscript.NewCannedPrevOutputFetcher(
+		txOut.PkScript, txOut.Value,
+	)
+
+	txSigHashes := txscript.NewTxSigHashes(redeemTx, prevFetcher)
 	pkScript, err = payToWitnessPubKeyHashScript(addr.WitnessProgram())
 
 	{
@@ -169,8 +194,16 @@ func (s *BTCSignerSuite) TestP2WPH(c *C) {
 		flags := txscript.ScriptBip16 | txscript.ScriptVerifyDERSignatures |
 			txscript.ScriptStrictMultiSig |
 			txscript.ScriptDiscourageUpgradableNops
-		vm, err := txscript.NewEngine(originTx.TxOut[0].PkScript, redeemTx, 0,
-			flags, nil, nil, -1)
+		vm, err := txscript.NewEngine(
+			originTx.TxOut[0].PkScript,
+			redeemTx,
+			0,
+			flags,
+			nil,
+			nil,
+			-1,
+			prevFetcher,
+		)
 		c.Assert(err, IsNil)
 
 		err = vm.Execute()
@@ -180,15 +213,23 @@ func (s *BTCSignerSuite) TestP2WPH(c *C) {
 	{
 		witnessHash, err := txscript.CalcWitnessSigHash(pkScript, txSigHashes, txscript.SigHashAll, redeemTx, 0, 100000000)
 		c.Assert(err, IsNil)
-		sig, err := privKey.Sign(witnessHash)
+		sig := ecdsa.Sign(privKey, witnessHash)
 		txWitness := wire.TxWitness{append(sig.Serialize(), byte(txscript.SigHashAll)), pubKeyHash}
 		redeemTx.TxIn[0].Witness = txWitness
 
 		flags := txscript.ScriptBip16 | txscript.ScriptVerifyDERSignatures |
 			txscript.ScriptStrictMultiSig |
 			txscript.ScriptDiscourageUpgradableNops
-		vm, err := txscript.NewEngine(originTx.TxOut[0].PkScript, redeemTx, 0,
-			flags, nil, nil, -1)
+		vm, err := txscript.NewEngine(
+			originTx.TxOut[0].PkScript,
+			redeemTx,
+			0,
+			flags,
+			nil,
+			nil,
+			-1,
+			prevFetcher,
+		)
 		c.Assert(err, IsNil)
 
 		err = vm.Execute()
