@@ -20,8 +20,9 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=zetacore \
 	-X github.com/zeta-chain/zetacore/common.BuildTime=$(BUILDTIME) \
 	-X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb
 
-BUILD_FLAGS := -ldflags '$(ldflags)' -tags PRIVNET,pebbledb,ledger
+PRIVNET_BUILD_FLAGS := -ldflags '$(ldflags)' -tags PRIVNET,pebbledb,ledger
 TESTNET_BUILD_FLAGS := -ldflags '$(ldflags)' -tags TESTNET,pebbledb,ledger
+MAINNET_BUILD_FLAGS := -ldflags '$(ldflags)' -tags MAINNET,pebbledb,ledger
 
 TEST_DIR?="./..."
 TEST_BUILD_FLAGS := -tags TESTNET,pebbledb,ledger
@@ -82,21 +83,27 @@ build-testnet-ubuntu: go.sum
 
 install: go.sum
 		@echo "--> Installing zetacored & zetaclientd"
-		@go install -mod=readonly $(BUILD_FLAGS) ./cmd/zetacored
-		@go install -mod=readonly $(BUILD_FLAGS) ./cmd/zetaclientd
+		@go install -mod=readonly $(MAINNET_BUILD_FLAGS) ./cmd/zetacored
+		@go install -mod=readonly $(MAINNET_BUILD_FLAGS) ./cmd/zetaclientd
+
+install: go.sum
+		@echo "--> Installing zetacored & zetaclientd"
+		@go install -mod=readonly $(PRIVNET_BUILD_FLAGS) ./cmd/zetacored
+		@go install -mod=readonly $(PRIVNET_BUILD_FLAGS) ./cmd/zetaclientd
+
 
 install-zetaclient: go.sum
 		@echo "--> Installing zetaclientd"
-		@go install -mod=readonly $(BUILD_FLAGS) ./cmd/zetaclientd
+		@go install -mod=readonly $(PRIVNET_BUILD_FLAGS) ./cmd/zetaclientd
 
 # running with race detector on will be slow
 install-zetaclient-race-test-only-build: go.sum
 		@echo "--> Installing zetaclientd"
-		@go install -race -mod=readonly $(BUILD_FLAGS) ./cmd/zetaclientd
+		@go install -race -mod=readonly $(PRIVNET_BUILD_FLAGS) ./cmd/zetaclientd
 
 install-zetacore: go.sum
 		@echo "--> Installing zetacored"
-		@go install -mod=readonly $(BUILD_FLAGS) ./cmd/zetacored
+		@go install -mod=readonly $(PRIVNET_BUILD_FLAGS) ./cmd/zetacored
 
 install-zetacore-testnet: go.sum
 		@echo "--> Installing zetacored"
@@ -104,7 +111,7 @@ install-zetacore-testnet: go.sum
 
 install-smoketest: go.sum
 		@echo "--> Installing orchestrator"
-		@go install -mod=readonly $(BUILD_FLAGS) ./contrib/localnet/orchestrator/smoketest
+		@go install -mod=readonly $(PRIVNET_BUILD_FLAGS) ./contrib/localnet/orchestrator/smoketest
 
 go.sum: go.mod
 		@echo "--> Ensure dependencies have not been modified"
