@@ -2,8 +2,9 @@ package keeper
 
 import (
 	"context"
-	"cosmossdk.io/math"
 	"fmt"
+
+	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -169,6 +170,38 @@ func (k Keeper) CctxAllPending(c context.Context, req *types.QueryAllCctxPending
 			return nil, status.Error(codes.Internal, "cctxIndex not found")
 		}
 		sends = append(sends, &cctx)
+	}
+
+	return &types.QueryAllCctxPendingResponse{CrossChainTx: sends}, nil
+}
+
+func (k Keeper) CctxAllPendingMissing(c context.Context, req *types.QueryAllCctxPendingRequest) (*types.QueryAllCctxPendingResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(c)
+	tss, found := k.GetTSS(ctx)
+	if !found {
+		return nil, status.Error(codes.Internal, "tss not found")
+	}
+	p, found := k.GetPendingNonces(ctx, tss.TssPubkey, req.ChainId)
+	if !found {
+		return nil, status.Error(codes.Internal, "pending nonces not found")
+	}
+	sends := make([]*types.CrossChainTx, 0)
+
+	for i := int64(0); i < p.NonceLow; i++ {
+		res, found := k.GetNonceToCctx(ctx, tss.TssPubkey, int64(req.ChainId), i)
+		if !found {
+			return nil, status.Error(codes.Internal, fmt.Sprintf("nonceToCctx not found: nonce %d, chainid %d", i, req.ChainId))
+		}
+		send, found := k.GetCrossChainTx(ctx, res.CctxIndex)
+		if !found {
+			return nil, status.Error(codes.Internal, fmt.Sprintf("cctx not found: index %s", res.CctxIndex))
+		}
+		if send.CctxStatus.Status == types.CctxStatus_PendingOutbound || send.CctxStatus.Status == types.CctxStatus_PendingRevert {
+			sends = append(sends, &send)
+		}
 	}
 
 	return &types.QueryAllCctxPendingResponse{CrossChainTx: sends}, nil
