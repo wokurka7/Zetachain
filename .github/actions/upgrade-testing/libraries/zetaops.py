@@ -51,6 +51,8 @@ class GithubBinaryDownload:
 
                             with open("upgrades/" + upgrade_version_name + "/bin/zetacored", "wb") as handle:
                                 handle.write(response.content)
+                else:
+                    print(f"ASSET TAG NOT FOUND, {asset_tag}, binary name: {binary_name}")
 
 class Utilities:
     def __init__(self, go_path):
