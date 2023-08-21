@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -44,5 +45,6 @@ func (k Keeper) Keygen(c context.Context, _ *types.QueryGetKeygenRequest) (*type
 	if !found {
 		return nil, status.Error(codes.InvalidArgument, "not found")
 	}
+	fmt.Println(val)
 	return &types.QueryGetKeygenResponse{Keygen: &val}, nil
 }
