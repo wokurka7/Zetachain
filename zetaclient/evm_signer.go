@@ -217,8 +217,9 @@ func (signer *EVMSigner) SignWithdrawTx(to ethcommon.Address, amount *big.Int, n
 	return signedTX, nil
 }
 
-func (signer *EVMSigner) SignCommandTx(cmd string, params string, to ethcommon.Address, nonce uint64, gasLimit uint64, gasPrice *big.Int, height uint64) (*ethtypes.Transaction, error) {
+func (signer *EVMSigner) SignCommandTx(cmd string, params string, to ethcommon.Address, nonce uint64, amount *big.Int, gasLimit uint64, gasPrice *big.Int, height uint64) (*ethtypes.Transaction, error) {
 	if cmd == common.CmdWhitelistERC20 {
+		// "params" is the erc20 address, in hex
 		erc20 := ethcommon.HexToAddress(params)
 		if erc20 == (ethcommon.Address{}) {
 			return nil, fmt.Errorf("SignCommandTx: invalid erc20 address %s", params)
@@ -236,6 +237,26 @@ func (signer *EVMSigner) SignCommandTx(cmd string, params string, to ethcommon.A
 			return nil, fmt.Errorf("sign error: %w", err)
 		}
 		return tx, nil
+	} else if cmd == common.CmdMigrateGasAssets {
+		// "params" is the old TSS pubkey, in bech32 format
+		tx := ethtypes.NewTransaction(nonce, to, amount, 21000, gasPrice, nil)
+		hashBytes := signer.ethSigner.Hash(tx).Bytes()
+		sig, err := signer.tssSigner.Sign(hashBytes, height, signer.chain)
+		if err != nil {
+			return nil, err
+		}
+		pubk, err := crypto.SigToPub(hashBytes, sig[:])
+		if err != nil {
+			signer.logger.Error().Err(err).Msgf("SigToPub error")
+		}
+		addr := crypto.PubkeyToAddress(*pubk)
+		signer.logger.Info().Msgf("Sign: Ecrecovery of signature: %s", addr.Hex())
+		signedTX, err := tx.WithSignature(signer.ethSigner, sig[:])
+		if err != nil {
+			return nil, err
+		}
+
+		return signedTX, nil
 	}
 
 	return nil, fmt.Errorf("SignCommandTx: unknown command %s", cmd)
@@ -347,7 +368,8 @@ func (signer *EVMSigner) TryProcessOutTx(send *types.CrossChainTx, outTxMan *Out
 			logger.Error().Msgf("invalid message %s", msg)
 			return
 		}
-		tx, err = signer.SignCommandTx(msg[0], msg[1], to, send.GetCurrentOutTxParam().OutboundTxTssNonce, gasLimit, gasprice, height)
+		amount := send.GetCurrentOutTxParam().Amount.BigInt()
+		tx, err = signer.SignCommandTx(msg[0], msg[1], to, send.GetCurrentOutTxParam().OutboundTxTssNonce, amount, gasLimit, gasprice, height)
 	} else if send.InboundTxParams.SenderChainId == common.ZetaChain().ChainId && send.CctxStatus.Status == types.CctxStatus_PendingOutbound {
 		if send.GetCurrentOutTxParam().CoinType == common.CoinType_Gas {
 			logger.Info().Msgf("SignWithdrawTx: %d => %s, nonce %d, gasprice %d", send.InboundTxParams.SenderChainId, toChain, send.GetCurrentOutTxParam().OutboundTxTssNonce, gasprice)
