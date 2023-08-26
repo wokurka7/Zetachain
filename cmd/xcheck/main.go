@@ -25,17 +25,11 @@ func main() {
 	defer grpcConn.Close()
 
 	crosschainClient := crosschaintypes.NewQueryClient(grpcConn)
-	res, err := crosschainClient.InTxHashToCctx(context.Background(), &crosschaintypes.QueryGetInTxHashToCctxRequest{
-		InTxHash: "8fd1c39d2f2f6630a92353164d7a230aed0e69c1efe8593f6eda872e961691fb",
-	})
-	st, ok := status.FromError(err)
-	if ok && st.Code() == codes.NotFound {
-		fmt.Printf("Error is of type NotFound: %s\n", st.Message())
-	} else {
-		fmt.Println("Error is not of type NotFound!")
-	}
-	_ = res
+	BitcoinCrossCheck(crosschainClient)
 
+}
+
+func BitcoinCrossCheck(crosschainClient crosschaintypes.QueryClient) {
 	tssResp, err := crosschainClient.GetTssAddress(context.Background(), &crosschaintypes.QueryGetTssAddressRequest{})
 	if err != nil {
 		panic(err)
@@ -48,7 +42,6 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("TSS BTC Address: %s\n", btcTSSAddress.EncodeAddress())
-
 	connCfg := &rpcclient.ConnConfig{
 		Host:         "bitcoin-rpc.athens.zetachain.com",
 		User:         "user",
@@ -110,4 +103,5 @@ func main() {
 	}
 
 	fmt.Printf("#### XCHECK COMPLETE: %d/%d CCTX NOT REGISTERED in the past %d blocks\n", kiaCnt, inTxCnt, endBN-startBN)
+
 }
