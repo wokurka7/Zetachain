@@ -6,6 +6,9 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcutil"
+	ethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/nanmu42/etherscan-api"
 	"github.com/rs/zerolog"
 	crosschaintypes "github.com/zeta-chain/zetacore/x/crosschain/types"
 	"github.com/zeta-chain/zetacore/zetaclient"
@@ -13,6 +16,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"math/big"
+	"sync"
 	"time"
 )
 
@@ -23,13 +28,33 @@ func main() {
 		panic(err)
 	}
 	defer grpcConn.Close()
-
+	var wg sync.WaitGroup
 	crosschainClient := crosschaintypes.NewQueryClient(grpcConn)
-	BitcoinCrossCheck(crosschainClient)
-
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		//BitcoinCrossCheck(crosschainClient, 1000)
+	}()
+	goerliClient, err := ethclient.Dial("https://summer-red-dust.ethereum-goerli.discover.quiknode.pro/d59692c13082ce6b8290e01db1324ac1e27ee54a/")
+	if err != nil {
+		panic(err)
+	}
+	//goerliEtherscanAPIURL := "https://api-goerli.etherscan.io/api"
+	goerliEtherscanClient := etherscan.NewCustomized(etherscan.Customization{
+		Timeout: 15 * time.Second,
+		Key:     "E1DG89WEBS2ZESXQNWUDKJJIIYQEX4HIHP",
+		BaseURL: "https://api-goerli.etherscan.io/api",
+		Verbose: false,
+	})
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		EthishCrossCheckTSSInbound(crosschainClient, goerliClient, goerliEtherscanClient)
+	}()
+	wg.Wait()
 }
 
-func BitcoinCrossCheck(crosschainClient crosschaintypes.QueryClient) {
+func BitcoinCrossCheck(crosschainClient crosschaintypes.QueryClient, numBlocksToCheck int64) {
 	tssResp, err := crosschainClient.GetTssAddress(context.Background(), &crosschaintypes.QueryGetTssAddressRequest{})
 	if err != nil {
 		panic(err)
@@ -55,7 +80,7 @@ func BitcoinCrossCheck(crosschainClient crosschaintypes.QueryClient) {
 	if err != nil {
 		panic(err)
 	}
-	startBN := bn - 1000
+	startBN := bn - numBlocksToCheck
 	endBN := bn
 	kiaCnt := 0
 	inTxCnt := 0
@@ -103,5 +128,62 @@ func BitcoinCrossCheck(crosschainClient crosschaintypes.QueryClient) {
 	}
 
 	fmt.Printf("#### XCHECK COMPLETE: %d/%d CCTX NOT REGISTERED in the past %d blocks\n", kiaCnt, inTxCnt, endBN-startBN)
+}
 
+func EthishCrossCheckTSSInbound(crosschainClient crosschaintypes.QueryClient, client *ethclient.Client, etherscanClient *etherscan.Client) {
+	tssResp, err := crosschainClient.GetTssAddress(context.Background(), &crosschaintypes.QueryGetTssAddressRequest{})
+	if err != nil {
+		panic(err)
+	}
+	tssAddress := ethcommon.HexToAddress(tssResp.Eth)
+	if tssAddress == (ethcommon.Address{}) {
+		panic("tss address not found")
+	}
+	bn, err := client.BlockNumber(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	startBN := int(bn - 100)
+	endBN := int(bn - 15)
+
+	kiaCnt := 0
+	inTxCnt := 0
+	for i := startBN; i < endBN; i++ {
+		block, err := client.BlockByNumber(context.Background(), big.NewInt(int64(i)))
+		if err != nil {
+			panic(err)
+		}
+		ts := time.Unix(int64(block.Time()), 0)
+		fmt.Printf("BTC Block %d: [%d/%d], %s\n", i, i-startBN, endBN-startBN, ts.String())
+		for _, tx := range block.Transactions() {
+			if tx.To() != nil && *tx.To() == tssAddress {
+				inTxCnt++
+				fmt.Printf("  InTx: %s\n", tx.Hash().String())
+				res, err := crosschainClient.InTxHashToCctx(context.Background(), &crosschaintypes.QueryGetInTxHashToCctxRequest{
+					InTxHash: tx.Hash().String(),
+				})
+				if err != nil {
+					st, ok := status.FromError(err)
+					if ok && st.Code() == codes.NotFound {
+						//fmt.Printf("Error is of type NotFound: %s\n", st.Message())
+						fmt.Printf("  #### XCHECK FAIL: CCTX NOT REGISTERED FOR INCOMING TX %s\n", tx.Hash().String())
+						kiaCnt++
+					} else {
+						fmt.Println("  Error is not of type NotFound!")
+						panic(err)
+					}
+				} else {
+					cctx, err := crosschainClient.Cctx(context.Background(), &crosschaintypes.QueryGetCctxRequest{
+						Index: res.InTxHashToCctx.CctxIndex[0],
+					})
+					if err != nil {
+						panic(err)
+					}
+					fmt.Printf("  OK: cctx status %s\n", cctx.CrossChainTx.CctxStatus.Status.String())
+				}
+			}
+		}
+	}
+
+	fmt.Printf("#### XCHECK COMPLETE: %d/%d CCTX NOT REGISTERED in the past %d blocks\n", kiaCnt, inTxCnt, endBN-startBN)
 }
