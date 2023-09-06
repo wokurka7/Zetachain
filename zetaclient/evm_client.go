@@ -646,7 +646,7 @@ func (ob *EVMChainClient) observeInTX() error {
 			Context: context.TODO(),
 		}, []ethcommon.Address{}, []*big.Int{})
 		if err != nil {
-			ob.logger.ChainLogger.Warn().Err(err).Msgf("observeInTx: FilterZetaSent error:")
+			ob.logger.ChainLogger.Error().Err(err).Msgf("observeInTx: FilterZetaSent error:")
 			return
 		}
 		// Pull out arguments from logs
@@ -655,7 +655,7 @@ func (ob *EVMChainClient) observeInTX() error {
 			ob.logger.ExternalChainWatcher.Info().Msgf("TxBlockNumber %d Transaction Hash: %s Message : %s", event.Raw.BlockNumber, event.Raw.TxHash, event.Message)
 			destChain := common.GetChainFromChainID(event.DestinationChainId.Int64())
 			if destChain == nil {
-				ob.logger.ExternalChainWatcher.Warn().Msgf("chain id not supported  %d", event.DestinationChainId.Int64())
+				ob.logger.ExternalChainWatcher.Error().Msgf("chain id not supported  %d", event.DestinationChainId.Int64())
 				continue
 			}
 			destAddr := clienttypes.BytesToEthHex(event.DestinationAddress)
@@ -758,6 +758,7 @@ func (ob *EVMChainClient) observeInTX() error {
 
 		// query incoming gas asset
 		if !ob.chain.IsKlaytnChain() {
+			ob.logger.ExternalChainWatcher.Info().Msgf("Checking for all inTX to TSS address: startBlock %d, toBlock %d", startBlock, toBlock)
 			for bn := startBlock; bn <= toBlock; bn++ {
 				//block, err := ob.EvmClient.BlockByNumber(context.Background(), big.NewInt(int64(bn)))
 				block, err := ob.EvmClient.BlockByNumber(context.Background(), big.NewInt(bn))
@@ -765,6 +766,7 @@ func (ob *EVMChainClient) observeInTX() error {
 					ob.logger.ExternalChainWatcher.Error().Err(err).Msgf("error getting block: %d", bn)
 					continue
 				}
+				ob.logger.ExternalChainWatcher.Info().Msgf("InTX to TSS block %d: num txs: %d", bn, len(block.Transactions()))
 				//ob.logger.ExternalChainWatcher.Debug().Msgf("block %d: num txs: %d", bn, len(block.Transactions()))
 				for _, tx := range block.Transactions() {
 					if tx.To() == nil {
@@ -850,9 +852,10 @@ func (ob *EVMChainClient) observeInTX() error {
 }
 
 func (ob *EVMChainClient) ReportTokenSentToTSS(txhash ethcommon.Hash, value *big.Int, receipt *ethtypes.Receipt, from ethcommon.Address, data []byte) (string, error) {
-	ob.logger.ExternalChainWatcher.Info().Msgf("TSS inTx detected: %s, blocknum %d", txhash.Hex(), receipt.BlockNumber)
-	ob.logger.ExternalChainWatcher.Info().Msgf("TSS inTx value: %s", value.String())
-	ob.logger.ExternalChainWatcher.Info().Msgf("TSS inTx from: %s", from.Hex())
+	tssloger := ob.logger.ExternalChainWatcher.With().Str("chain", ob.chain.ChainName.String()).Logger()
+	tssloger.Info().Msgf("TSS inTx detected: %s, blocknum %d ", txhash.Hex(), receipt.BlockNumber)
+	tssloger.Info().Msgf("TSS inTx value: %s", value.String())
+	tssloger.Info().Msgf("TSS inTx from: %s", from.Hex())
 	message := ""
 	if len(data) != 0 {
 		message = hex.EncodeToString(data)
@@ -872,6 +875,9 @@ func (ob *EVMChainClient) ReportTokenSentToTSS(txhash ethcommon.Hash, value *big
 		PostSendEVMGasLimit,
 		"",
 	)
+	if err != nil {
+		tssloger.Error().Err(err).Msg("error posting to zeta core")
+	}
 	return zetaHash, err
 }
 
