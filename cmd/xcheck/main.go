@@ -3,6 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/big"
+	"sync"
+	"time"
+
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcutil"
@@ -16,9 +20,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"math/big"
-	"sync"
-	"time"
 )
 
 func main() {
@@ -153,12 +154,12 @@ func EthishCrossCheckTSSInbound(crosschainClient crosschaintypes.QueryClient, cl
 		if err != nil {
 			panic(err)
 		}
-		ts := time.Unix(int64(block.Time()), 0)
-		fmt.Printf("BTC Block %d: [%d/%d], %s\n", i, i-startBN, endBN-startBN, ts.String())
+		//ts := time.Unix(int64(block.Time()), 0)
+		//fmt.Printf("ETH Block %d: [%d/%d], %s\n", i, i-startBN, endBN-startBN, ts.String())
 		for _, tx := range block.Transactions() {
 			if tx.To() != nil && *tx.To() == tssAddress {
 				inTxCnt++
-				fmt.Printf("  InTx: %s\n", tx.Hash().String())
+				//fmt.Printf("  InTx: %s\n", tx.Hash().String())
 				res, err := crosschainClient.InTxHashToCctx(context.Background(), &crosschaintypes.QueryGetInTxHashToCctxRequest{
 					InTxHash: tx.Hash().String(),
 				})
@@ -173,13 +174,13 @@ func EthishCrossCheckTSSInbound(crosschainClient crosschaintypes.QueryClient, cl
 						panic(err)
 					}
 				} else {
-					cctx, err := crosschainClient.Cctx(context.Background(), &crosschaintypes.QueryGetCctxRequest{
+					_, err := crosschainClient.Cctx(context.Background(), &crosschaintypes.QueryGetCctxRequest{
 						Index: res.InTxHashToCctx.CctxIndex[0],
 					})
 					if err != nil {
 						panic(err)
 					}
-					fmt.Printf("  OK: cctx status %s\n", cctx.CrossChainTx.CctxStatus.Status.String())
+					//fmt.Printf("  OK: cctx status %s\n", cctx.CrossChainTx.CctxStatus.Status.String())
 				}
 			}
 		}

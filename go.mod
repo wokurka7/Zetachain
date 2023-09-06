@@ -38,6 +38,7 @@ require (
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce
 	github.com/emicklei/proto v1.11.1
 	github.com/evmos/ethermint v0.22.0
+	github.com/nanmu42/etherscan-api v1.10.0
 	github.com/pkg/errors v0.9.1
 	github.com/rakyll/statik v0.1.7
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15
@@ -72,7 +73,6 @@ require (
 	github.com/golang/glog v1.1.0 // indirect
 	github.com/jmhodges/levigo v1.0.0 // indirect
 	github.com/linxGnu/grocksdb v1.7.15 // indirect
-	github.com/nanmu42/etherscan-api v1.10.0 // indirect
 	github.com/prometheus/tsdb v0.7.1 // indirect
 	github.com/rjeczalik/notify v0.9.1 // indirect
 	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
