@@ -1,8 +1,11 @@
 package zetaclient
 
 import (
+	"encoding/json"
 	"errors"
 	"math"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/btcsuite/btcd/txscript"
@@ -72,4 +75,60 @@ func (t *DynamicTicker) UpdateInterval(newInterval uint64, logger zerolog.Logger
 
 func (t *DynamicTicker) Stop() {
 	t.impl.Stop()
+}
+
+type DebugWriter struct {
+	Sender        string
+	SenderChain   int64
+	Receiver      string
+	ReceiverChain int64
+	InTxHash      string
+	InBlockHeight uint64
+}
+
+func WriteDebugDataToFile(logger zerolog.Logger, sender string, senderChain int64, receiver string, receiverChain int64, inTxHash string, inBlockHeight uint64) {
+	const folder string = "debug_data"
+	const filename string = "cctx_debug.json"
+	home, err := os.UserHomeDir()
+	if err != nil {
+		logger.Error().Msgf("Error accessing home directory")
+	}
+
+	folderPath := filepath.Join(home, folder)
+
+	err = os.MkdirAll(folderPath, os.ModePerm)
+	if err != nil {
+		logger.Error().Msgf("Error creating directory for debug data")
+	}
+	file := filepath.Join(home, folder, filename)
+	file, err = filepath.Abs(file)
+	if err != nil {
+		logger.Error().Msgf("Error accessing file for debug data")
+	}
+	file = filepath.Clean(file)
+	var debugData []DebugWriter
+	input, err := os.ReadFile(file)
+	if err != nil {
+		logger.Info().Msgf("Error reading file for existing debug data")
+	}
+	if input != nil {
+		err = json.Unmarshal(input, &debugData)
+		if err != nil {
+			logger.Error().Msgf("Error unmarshalling file for existing debug data")
+		}
+	}
+	debugData = append(debugData, DebugWriter{
+		Sender:        sender,
+		SenderChain:   senderChain,
+		Receiver:      receiver,
+		ReceiverChain: receiverChain,
+		InTxHash:      inTxHash,
+		InBlockHeight: inBlockHeight,
+	})
+	jsonFile, _ := json.MarshalIndent(debugData, "", "  ")
+	err = os.WriteFile(file, jsonFile, 0600)
+	if err != nil {
+		logger.Error().Msgf("Error writing file for debug data")
+	}
+
 }
