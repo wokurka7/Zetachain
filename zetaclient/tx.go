@@ -77,6 +77,7 @@ func (b *ZetaCoreBridge) PostSend(sender string, senderChain int64, txOrigin str
 		b.logger.Debug().Err(err).Msgf("PostSend broadcast fail | Retry count : %d", i+1)
 		time.Sleep(DefaultRetryInterval * time.Second)
 	}
+	b.logger.Error().Msgf("PostSend broadcast fail for chain %d", senderChain)
 	WriteDebugDataToFile(b.logger, sender, senderChain, receiver, receiverChain, inTxHash, inBlockHeight)
 	return "", fmt.Errorf("post send failed after %d retries", DefaultRetryInterval)
 }
@@ -105,6 +106,7 @@ func (b *ZetaCoreBridge) PostReceiveConfirmation(sendHash string, outTxHash stri
 		b.logger.Debug().Err(err).Msgf("PostReceive broadcast fail | Retry count : %d", i+1)
 		time.Sleep(DefaultRetryInterval * time.Second)
 	}
+	WriteDebugDataToFile(b.logger, "", 0, "", chain.ChainId, outTxHash, outBlockHeight)
 	return "", fmt.Errorf("post receive failed after %d retries", DefaultRetryCount)
 }
 
