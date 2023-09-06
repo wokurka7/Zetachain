@@ -12,6 +12,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/zeta-chain/zetacore/cmd/zetacored/config"
+	"github.com/zeta-chain/zetacore/common"
+	crosschaintypes "github.com/zeta-chain/zetacore/x/crosschain/types"
 )
 
 const node = "tcp://3.218.170.198:26657"
@@ -34,6 +36,8 @@ type TokenDistribution struct {
 }
 
 func main() {
+	GetCCTXHash()
+
 	file, _ := filepath.Abs(filepath.Join("cmd", "zetacore_utils", "address-list.json"))
 	addresses, err := readLines(file)
 	if err != nil {
@@ -144,4 +148,35 @@ func removeDuplicates(s []string) []string {
 		}
 	}
 	return result
+}
+
+func GetCCTXHash() {
+	amount := "10000000000000"
+	asset := ""
+	creator := "zeta1mte0r3jzkf2rkd7ex4p3xsd3fxqg7q29q0wxl5"
+	gas_limit := 90000
+	in_block_height := 9649384
+	in_tx_hash := "0x48ae453a1d4d65774320570646d4c9b2287e1f86ef22beec191a0f2295579d1f"
+	message := "e66b7b71070747c43cbdbdf607f25da8f073239e48f80608b672dc30dc7e3dbbd0343c5f02c738eb2c0e5ec8794aeba837a894dff2c3a605a353e56e"
+	receiver := "0x2C0E5EC8794aEba837a894dFf2C3a605a353E56e"
+	receiver_chain := 7001
+	sender := "0x2C0E5EC8794aEba837a894dFf2C3a605a353E56e"
+	sender_chain_id := 5
+	tx_origin := "0x2C0E5EC8794aEba837a894dFf2C3a605a353E56e"
+	msg := crosschaintypes.NewMsgSendVoter(
+		creator,
+		sender,
+		int64(sender_chain_id),
+		tx_origin,
+		receiver,
+		int64(receiver_chain),
+		sdkmath.NewUintFromString(amount),
+		message,
+		in_tx_hash,
+		uint64(in_block_height),
+		uint64(gas_limit),
+		common.CoinType_Gas,
+		asset)
+	fmt.Println(msg.Digest())
+
 }

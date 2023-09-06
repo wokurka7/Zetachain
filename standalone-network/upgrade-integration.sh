@@ -80,7 +80,6 @@ zetacored validate-genesis
 mkdir -p $DAEMON_HOME/cosmovisor/genesis/bin
 mkdir -p $DAEMON_HOME/cosmovisor/upgrades/$UpgradeName/bin
 
-
 # Setup new binary
 git checkout $NewBinary
 git pull

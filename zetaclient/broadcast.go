@@ -16,6 +16,12 @@ import (
 	"github.com/zeta-chain/zetacore/app"
 )
 
+func (b *ZetaCoreBridge) AddMsgToQueue(msg sdktypes.Msg) {
+	b.bridgeLock.Lock()
+	defer b.bridgeLock.Unlock()
+	b.msgList = append(b.msgList, msg)
+}
+
 // Broadcast Broadcasts tx to metachain. Returns txHash and error
 func (b *ZetaCoreBridge) Broadcast(gaslimit uint64, authzWrappedMsg sdktypes.Msg, authzSigner AuthZSigner) (string, error) {
 	gaslimit = gaslimit * 3
@@ -65,7 +71,6 @@ func (b *ZetaCoreBridge) Broadcast(gaslimit uint64, authzWrappedMsg sdktypes.Msg
 	if err != nil {
 		return "", err
 	}
-
 	// broadcast to a Tendermint node
 	commit, err := ctx.BroadcastTxSync(txBytes)
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/zeta-chain/zetacore/common"
 
 	"sync"
@@ -52,6 +53,8 @@ type ZetaCoreBridge struct {
 	//ChainNonces         map[string]uint64 // FIXME: Remove this?
 	lastOutTxReportTime map[string]time.Time
 	stop                chan struct{}
+	msgList             []sdk.Msg
+	bridgeLock          *sync.RWMutex
 
 	pause chan struct{}
 }
