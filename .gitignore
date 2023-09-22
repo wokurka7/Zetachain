@@ -47,8 +47,5 @@ localnet/zetachain-monorepo
 /standalone-network/authz/tx.json
 /zetanode.log
 
+# GoReleaser
 dist/
-
-## TMP 
-
-contrib/local-athens
