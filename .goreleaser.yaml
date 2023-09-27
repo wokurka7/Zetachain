@@ -80,6 +80,44 @@ builds:
     flags: *default_testnet_flags
     ldflags: *default_ldflags
 
+  - id: "zetacored-mock-mainnet"
+    main: ./cmd/zetacored
+    binary: zetacored
+    env:
+      - 'CC={{ index .Env (print "CC_" .Os "_" .Arch) }}'
+      - 'CXX={{ index .Env (print "CXX_" .Os "_" .Arch) }}'
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - arm64
+      - amd64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    flags: &default_mock_mainnet_flags
+      - -tags=MOCK_MAINNET,pebbledb,ledger,cgo
+    ldflags: *default_ldflags
+
+  - id: "zetaclientd-mock-mainnet"
+    main: ./cmd/zetaclientd
+    binary: zetaclientd
+    env:
+      - 'CC={{ index .Env (print "CC_" .Os "_" .Arch) }}'
+      - 'CXX={{ index .Env (print "CXX_" .Os "_" .Arch) }}'
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - arm64
+      - amd64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    flags: *default_mock_mainnet_flags
+    ldflags: *default_ldflags
 
 archives:
   # - name_template: "zetachain-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
@@ -87,19 +125,24 @@ archives:
   #     - goos: windows
   #       format: zip
   #   builds:
-  #     - zetacored-{{ .Os }}-{{ .Arch }} 
-  #     - zetaclientd-{{ .Os }}-{{ .Arch }} 
+  #     - zetacored-testnet-{{ .Os }}-{{ .Arch }} 
+  #     - zetaclientd-testnet-{{ .Os }}-{{ .Arch }} 
 
-  - id: all
-    name_template: "{{ .ProjectName }}_{{ .Version }}_all"
+  - id: testnet
+    name_template: "{{ .ProjectName }}-{{ .Version }}-testnet"
     # files:
     #   - LICENSE*
     #   - README*
     #   - CHANGELOG*
     builds: 
-      - zetacored-{{ .Os }}-{{ .Arch }} 
-      - zetaclientd-{{ .Os }}-{{ .Arch }} 
+      - zetacored-testnet-{{ .Os }}-{{ .Arch }} 
+      - zetaclientd-testnet-{{ .Os }}-{{ .Arch }} 
 
+  - id: mock-mainnet
+    name_template: "{{ .ProjectName }}-{{ .Version }}-mock-mainnet"
+    builds: 
+      - zetacored-mock-mainnet-{{ .Os }}-{{ .Arch }} 
+      - zetaclientd-mock-mainnet-{{ .Os }}-{{ .Arch }} 
 checksum:
   name_template: "checksums.txt"
 changelog:
