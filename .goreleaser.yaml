@@ -2,11 +2,29 @@
 # Make sure to check the documentation at https://goreleaser.com
 
 ## Test locally with `make release-dry-run`
-## Test locally with `goreleaser build --snapshot --verbose --clean` !! Doesn't work because of cross compule dependenices 
-
 
 env:
   - CGO_ENABLED=1
+  - CC_darwin_arm64=oa64-clang
+  - CXX_darwin_arm64=oa64-clang++
+  - CC_darwin_amd64=o64-clang
+  - CXX_darwin_amd64=o64-clang+
+  - CC_linux_arm64=aarch64-linux-gnu-gcc
+  - CXX_linux_arm64=aarch64-linux-gnu-g++
+  - CC_linux_amd64=x86_64-linux-gnu-gcc
+  - CXX_linux_amd64=x86_64-linux-gnu-g++
+  - CC_windows_amd64=x86_64-w64-mingw32-gcc
+  - CXX_windows_amd64=x86_64-w64-mingw32-g++   
+
+# PACKAGES=$(shell go list ./... | grep -v '/simulation')
+# VERSION := $(shell git describe --tags)
+# COMMIT := $(shell [ -z "${COMMIT_ID}" ] && git log -1 --format='%H' || echo ${COMMIT_ID} )
+# BUILDTIME := $(shell date -u +"%Y%m%d.%H%M%S" )
+# DOCKER ?= docker
+# DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
+# GOFLAGS:=""   
+  # - CC_windows_arm64=
+  # - CXX_windows_arm64=
 
 before:
   hooks:
@@ -16,19 +34,22 @@ before:
 
     # you may remove this if you don't need go generate
     # - go generate ./...
+    
 builds:
-  - id: "zetacored-testnet-darwin-arm64"
+  - id: "zetacored-testnet"
     main: ./cmd/zetacored
-    binary: bin/zetacored
+    binary: zetacored
     env:
-      - CGO_ENABLED=1
-      - CC=o64-clang
-      - CXX=o64-clang++
+      - 'CC={{ index .Env (print "CC_" .Os "_" .Arch) }}'
+      - 'CXX={{ index .Env (print "CXX_" .Os "_" .Arch) }}'
     goos:
       - darwin
+      - linux
+      - windows
     goarch:
       - arm64
-    flags: &default_flags
+      - amd64
+    flags: &default_testnet_flags
       - -tags=TESTNET,pebbledb,ledger,cgo
     ldflags: &default_ldflags
       - -X github.com/cosmos/cosmos-sdk/version.Name=zetacore
@@ -42,130 +63,44 @@ builds:
       - -X github.com/zeta-chain/zetacore/common.BuildTime=$(BUILDTIME)
       - -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb
 
-  - id: "zetaclientd-testnet-darwin-arm64"
+  - id: "zetaclientd-testnet"
     main: ./cmd/zetaclientd
-    binary: bin/zetaclientd
+    binary: zetaclientd
     env:
-      - CGO_ENABLED=1
-      - CC=oa64-clang
-      - CXX=oa64-clang++
+      - 'CC={{ index .Env (print "CC_" .Os "_" .Arch) }}'
+      - 'CXX={{ index .Env (print "CXX_" .Os "_" .Arch) }}'
     goos:
       - darwin
+      - linux
+      - windows
     goarch:
       - arm64
-    flags: *default_flags
-    ldflags: *default_ldflags
-
-  - id: "zetacored-testnet-darwin-amd64"
-    main: ./cmd/zetacored
-    binary: bin/zetacored
-    env:
-      - CGO_ENABLED=1
-      - CC=o64-clang
-      - CXX=o64-clang++
-    goos:
-      - darwin
-    goarch:
       - amd64
-    flags: *default_flags
+    flags: *default_testnet_flags
     ldflags: *default_ldflags
 
-  - id: "zetaclientd-testnet-darwin-amd64"
-    main: ./cmd/zetaclientd
-    binary: bin/zetaclientd
-    env:
-      - CGO_ENABLED=1
-      - CC=oa64-clang
-      - CXX=oa64-clang++
-    goos:
-      - darwin
-    goarch:
-      - amd64
-    flags: *default_flags
-    ldflags: *default_ldflags
-
-  - id: "zetacored-testnet-linux-amd64"
-    main: ./cmd/zetacored
-    binary: bin/zetacored
-    env:
-      - CGO_ENABLED=1
-      # - CC=gcc
-      # - CXX=g++
-      - CC=x86_64-linux-gnu-gcc
-      - CXX=x86_64-linux-gnu-g++
-    goos:
-      - linux
-    goarch:
-      - amd64
-    flags: *default_flags
-    ldflags: *default_ldflags
-
-  - id: "zetaclientd-testnet-linux-amd64"
-    main: ./cmd/zetaclientd
-    binary: bin/zetaclientd
-    env:
-      - CGO_ENABLED=1
-      # - CC=gcc
-      # - CXX=g++
-      - CC=x86_64-linux-gnu-gcc
-      - CXX=x86_64-linux-gnu-g++
-    goos:
-      - linux
-    goarch:
-      - amd64
-    flags: *default_flags
-    ldflags: *default_ldflags
-
-  - id: "zetaclientd-testnet-linux-arm64"
-    main: ./cmd/zetaclientd
-    binary: bin/zetaclientd
-    env:
-      - CGO_ENABLED=1
-      - CC=aarch64-linux-gnu-gcc
-      - CXX=aarch64-linux-gnu-g++
-    goos:
-      - linux
-    goarch:
-      - arm64
-    flags: *default_flags
-    ldflags: *default_ldflags
-
-  - id: "zetacored-testnet-linux-arm64"
-    main: ./cmd/zetacored
-    binary: bin/zetacored
-    env:
-      - CGO_ENABLED=1
-      - CC=aarch64-linux-gnu-gcc
-      - CXX=aarch64-linux-gnu-g++
-    goos:
-      - linux
-    goarch:
-      - arm64
-    flags: *default_flags
-    ldflags: *default_ldflags
+    ignore:
+      - goos: windows
+        goarch: arm64
 
 archives:
-  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    # replacements:
-    #   darwin: Darwin
-    #   linux: Linux
-    #   windows: Windows
-    #   amd64: x86_64
+  - name_template: "zetachain-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
     format_overrides:
       - goos: windows
         format: zip
     builds:
-      - zetacored-testnet-darwin-arm64
-      - zetaclientd-testnet-darwin-arm64
-    # - zetacored-darwin-arm64
-    # - zetacored-windows
-    # - zetacored-linux
-    # - zetacored-linux-arm64
-    # - zetaclientd-darwin
-    # - zetaclientd-darwin-arm64
-    # - zetaclientd-windows
-    # - zetaclientd-linux
-    # - zetaclientd-linux-arm64
+      - zetacored-{{ .Os }}-{{ .Arch }} 
+      - zetaclientd-{{ .Os }}-{{ .Arch }} 
+
+  - id: all
+    name_template: "{{ .ProjectName }}_{{ .Version }}_all"
+    files:
+      - LICENSE*
+      - README*
+      - CHANGELOG*
+    builds: 
+      - zetacored-{{ .Os }}-{{ .Arch }} 
+      - zetaclientd-{{ .Os }}-{{ .Arch }} 
 
 checksum:
   name_template: "checksums.txt"
@@ -177,6 +112,7 @@ changelog:
       - "^test:"
 snapshot:
   name_template: "{{ .Tag }}-next"
+
 # The lines beneath this are called `modelines`. See `:help modeline`
 # Feel free to remove those if you don't want/use them.
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
