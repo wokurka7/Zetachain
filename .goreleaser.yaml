@@ -1,114 +1,88 @@
 # This is an example .goreleaser.yml file with some sensible defaults.
 # Make sure to check the documentation at https://goreleaser.com
 
-## Test locally with `goreleaser build --snapshot --verbose --clean`
+## Test locally with `make release-dry-run`
+## Test locally with `goreleaser build --snapshot --verbose --clean` !! Doesn't work because of cross compule dependenices 
+
+
+env:
+  - CGO_ENABLED=1
+
 before:
   hooks:
     # You may remove this if you don't use go modules.
     - go mod download
     - go mod tidy
-    
+
     # you may remove this if you don't need go generate
     # - go generate ./...
 builds:
-  # - id: "zetacored-testnet-darwin-arm64"
-  #   main: ./cmd/zetacored
-  #   binary: bin/zetacored
-  #   env:
-  #     - CGO_ENABLED=1
-  #     - CC=o64-clang
-  #     - CXX=o64-clang++
-  #   goos:
-  #     - darwin
-  #   goarch:
-  #     - arm64
-  #   flags:
-  #     - -tags=TESTNET,pebbledb,ledger,cgo
-  #   ldflags:
-  #     - -X github.com/cosmos/cosmos-sdk/version.Name=zetacore 
-  #     - -X github.com/cosmos/cosmos-sdk/version.ServerName=zetacored 
-  #     - -X github.com/cosmos/cosmos-sdk/version.ClientName=zetaclientd 
-  #     - -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) 
-  #     - -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT)
-  #     - -X github.com/zeta-chain/zetacore/common.Name=zetacored 
-  #     - -X github.com/zeta-chain/zetacore/common.Version=$(VERSION) 
-  #     - -X github.com/zeta-chain/zetacore/common.CommitHash=$(COMMIT) 
-  #     - -X github.com/zeta-chain/zetacore/common.BuildTime=$(BUILDTIME) 
-  #     - -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb
+  - id: "zetacored-testnet-darwin-arm64"
+    main: ./cmd/zetacored
+    binary: bin/zetacored
+    env:
+      - CGO_ENABLED=1
+      - CC=o64-clang
+      - CXX=o64-clang++
+    goos:
+      - darwin
+    goarch:
+      - arm64
+    flags: &default_flags
+      - -tags=TESTNET,pebbledb,ledger,cgo
+    ldflags: &default_ldflags
+      - -X github.com/cosmos/cosmos-sdk/version.Name=zetacore
+      - -X github.com/cosmos/cosmos-sdk/version.ServerName=zetacored
+      - -X github.com/cosmos/cosmos-sdk/version.ClientName=zetaclientd
+      - -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION)
+      - -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT)
+      - -X github.com/zeta-chain/zetacore/common.Name=zetacored
+      - -X github.com/zeta-chain/zetacore/common.Version=$(VERSION)
+      - -X github.com/zeta-chain/zetacore/common.CommitHash=$(COMMIT)
+      - -X github.com/zeta-chain/zetacore/common.BuildTime=$(BUILDTIME)
+      - -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb
 
-  # - id: "zetaclientd-testnet-darwin-arm64"
-  #   main: ./cmd/zetaclientd
-  #   binary: bin/zetaclientd
-  #   env:
-  #     - CGO_ENABLED=1
-  #     - CC=oa64-clang
-  #     - CXX=oa64-clang++
-  #   goos:
-  #     - darwin
-  #   goarch:
-  #     - arm64
-  #   flags:
-  #     - -tags=TESTNET,pebbledb,ledger,cgo
-  #   ldflags:
-  #     - -X github.com/cosmos/cosmos-sdk/version.Name=zetacore 
-  #     - -X github.com/cosmos/cosmos-sdk/version.ServerName=zetacored 
-  #     - -X github.com/cosmos/cosmos-sdk/version.ClientName=zetaclientd 
-  #     - -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) 
-  #     - -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT)
-  #     - -X github.com/zeta-chain/zetacore/common.Name=zetacored 
-  #     - -X github.com/zeta-chain/zetacore/common.Version=$(VERSION) 
-  #     - -X github.com/zeta-chain/zetacore/common.CommitHash=$(COMMIT) 
-  #     - -X github.com/zeta-chain/zetacore/common.BuildTime=$(BUILDTIME) 
-  #     - -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb
-  # - id: "zetacored-testnet-darwin-amd64"
-  #   main: ./cmd/zetacored
-  #   binary: bin/zetacored
-  #   env:
-  #     - CGO_ENABLED=1
-  #     - CC=o64-clang
-  #     - CXX=o64-clang++
-  #   goos:
-  #     - darwin
-  #   goarch:
-  #     - amd64
-  #   flags:
-  #     - -tags=TESTNET,pebbledb,ledger,cgo
-  #   ldflags:
-  #     - -X github.com/cosmos/cosmos-sdk/version.Name=zetacore 
-  #     - -X github.com/cosmos/cosmos-sdk/version.ServerName=zetacored 
-  #     - -X github.com/cosmos/cosmos-sdk/version.ClientName=zetaclientd 
-  #     - -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) 
-  #     - -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT)
-  #     - -X github.com/zeta-chain/zetacore/common.Name=zetacored 
-  #     - -X github.com/zeta-chain/zetacore/common.Version=$(VERSION) 
-  #     - -X github.com/zeta-chain/zetacore/common.CommitHash=$(COMMIT) 
-  #     - -X github.com/zeta-chain/zetacore/common.BuildTime=$(BUILDTIME) 
-  #     - -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb
+  - id: "zetaclientd-testnet-darwin-arm64"
+    main: ./cmd/zetaclientd
+    binary: bin/zetaclientd
+    env:
+      - CGO_ENABLED=1
+      - CC=oa64-clang
+      - CXX=oa64-clang++
+    goos:
+      - darwin
+    goarch:
+      - arm64
+    flags: *default_flags
+    ldflags: *default_ldflags
 
-  # - id: "zetaclientd-testnet-darwin-amd64"
-  #   main: ./cmd/zetaclientd
-  #   binary: bin/zetaclientd
-  #   env:
-  #     - CGO_ENABLED=1
-  #     - CC=oa64-clang
-  #     - CXX=oa64-clang++
-  #   goos:
-  #     - darwin
-  #   goarch:
-  #     - amd64
-  #   flags:
-  #     - -tags=TESTNET,pebbledb,ledger,cgo
-  #   ldflags:
-  #     - -X github.com/cosmos/cosmos-sdk/version.Name=zetacore 
-  #     - -X github.com/cosmos/cosmos-sdk/version.ServerName=zetacored 
-  #     - -X github.com/cosmos/cosmos-sdk/version.ClientName=zetaclientd 
-  #     - -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) 
-  #     - -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT)
-  #     - -X github.com/zeta-chain/zetacore/common.Name=zetacored 
-  #     - -X github.com/zeta-chain/zetacore/common.Version=$(VERSION) 
-  #     - -X github.com/zeta-chain/zetacore/common.CommitHash=$(COMMIT) 
-  #     - -X github.com/zeta-chain/zetacore/common.BuildTime=$(BUILDTIME) 
-  #     - -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb
+  - id: "zetacored-testnet-darwin-amd64"
+    main: ./cmd/zetacored
+    binary: bin/zetacored
+    env:
+      - CGO_ENABLED=1
+      - CC=o64-clang
+      - CXX=o64-clang++
+    goos:
+      - darwin
+    goarch:
+      - amd64
+    flags: *default_flags
+    ldflags: *default_ldflags
+
+  - id: "zetaclientd-testnet-darwin-amd64"
+    main: ./cmd/zetaclientd
+    binary: bin/zetaclientd
+    env:
+      - CGO_ENABLED=1
+      - CC=oa64-clang
+      - CXX=oa64-clang++
+    goos:
+      - darwin
+    goarch:
+      - amd64
+    flags: *default_flags
+    ldflags: *default_ldflags
 
   - id: "zetacored-testnet-linux-amd64"
     main: ./cmd/zetacored
@@ -123,19 +97,8 @@ builds:
       - linux
     goarch:
       - amd64
-    flags:
-      - -tags=TESTNET,pebbledb,ledger,cgo
-    ldflags:
-      - -X github.com/cosmos/cosmos-sdk/version.Name=zetacore 
-      - -X github.com/cosmos/cosmos-sdk/version.ServerName=zetacored 
-      - -X github.com/cosmos/cosmos-sdk/version.ClientName=zetaclientd 
-      - -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) 
-      - -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT)
-      - -X github.com/zeta-chain/zetacore/common.Name=zetacored 
-      - -X github.com/zeta-chain/zetacore/common.Version=$(VERSION) 
-      - -X github.com/zeta-chain/zetacore/common.CommitHash=$(COMMIT) 
-      - -X github.com/zeta-chain/zetacore/common.BuildTime=$(BUILDTIME) 
-      - -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb
+    flags: *default_flags
+    ldflags: *default_ldflags
 
   - id: "zetaclientd-testnet-linux-amd64"
     main: ./cmd/zetaclientd
@@ -150,22 +113,10 @@ builds:
       - linux
     goarch:
       - amd64
-    flags:
-      - -tags=TESTNET,pebbledb,ledger,cgo
-    ldflags:
-      - -X github.com/cosmos/cosmos-sdk/version.Name=zetacore 
-      - -X github.com/cosmos/cosmos-sdk/version.ServerName=zetacored 
-      - -X github.com/cosmos/cosmos-sdk/version.ClientName=zetaclientd 
-      - -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) 
-      - -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT)
-      - -X github.com/zeta-chain/zetacore/common.Name=zetacored 
-      - -X github.com/zeta-chain/zetacore/common.Version=$(VERSION) 
-      - -X github.com/zeta-chain/zetacore/common.CommitHash=$(COMMIT) 
-      - -X github.com/zeta-chain/zetacore/common.BuildTime=$(BUILDTIME) 
-      - -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb
+    flags: *default_flags
+    ldflags: *default_ldflags
 
   - id: "zetaclientd-testnet-linux-arm64"
-
     main: ./cmd/zetaclientd
     binary: bin/zetaclientd
     env:
@@ -176,19 +127,9 @@ builds:
       - linux
     goarch:
       - arm64
-    flags:
-      - -tags=cgo
-    ldflags:
-      - -X github.com/cosmos/cosmos-sdk/version.Name=zetacore 
-      - -X github.com/cosmos/cosmos-sdk/version.ServerName=zetacored 
-      - -X github.com/cosmos/cosmos-sdk/version.ClientName=zetaclientd 
-      - -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) 
-      - -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT)
-      - -X github.com/zeta-chain/zetacore/common.Name=zetacored 
-      - -X github.com/zeta-chain/zetacore/common.Version=$(VERSION) 
-      - -X github.com/zeta-chain/zetacore/common.CommitHash=$(COMMIT) 
-      - -X github.com/zeta-chain/zetacore/common.BuildTime=$(BUILDTIME) 
-      - -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb
+    flags: *default_flags
+    ldflags: *default_ldflags
+
   - id: "zetacored-testnet-linux-arm64"
     main: ./cmd/zetacored
     binary: bin/zetacored
@@ -200,56 +141,42 @@ builds:
       - linux
     goarch:
       - arm64
-    flags:
-      - -tags=cgo
-    ldflags:
-      - -X github.com/cosmos/cosmos-sdk/version.Name=zetacore 
-      - -X github.com/cosmos/cosmos-sdk/version.ServerName=zetacored 
-      - -X github.com/cosmos/cosmos-sdk/version.ClientName=zetaclientd 
-      - -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) 
-      - -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT)
-      - -X github.com/zeta-chain/zetacore/common.Name=zetacored 
-      - -X github.com/zeta-chain/zetacore/common.Version=$(VERSION) 
-      - -X github.com/zeta-chain/zetacore/common.CommitHash=$(COMMIT) 
-      - -X github.com/zeta-chain/zetacore/common.BuildTime=$(BUILDTIME) 
-      - -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb
-
-
+    flags: *default_flags
+    ldflags: *default_ldflags
 
 archives:
-- name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
-  # replacements:
-  #   darwin: Darwin
-  #   linux: Linux
-  #   windows: Windows
-  #   amd64: x86_64
-  format_overrides:
-    - goos: windows
-      format: zip
-  builds:
-  - zetacored-testnet-darwin-arm64
-  - zetaclientd-testnet-darwin-arm64
-  # - zetacored-darwin-arm64
-  # - zetacored-windows
-  # - zetacored-linux
-  # - zetacored-linux-arm64
-  # - zetaclientd-darwin
-  # - zetaclientd-darwin-arm64
-  # - zetaclientd-windows
-  # - zetaclientd-linux
-  # - zetaclientd-linux-arm64
-  
+  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    # replacements:
+    #   darwin: Darwin
+    #   linux: Linux
+    #   windows: Windows
+    #   amd64: x86_64
+    format_overrides:
+      - goos: windows
+        format: zip
+    builds:
+      - zetacored-testnet-darwin-arm64
+      - zetaclientd-testnet-darwin-arm64
+    # - zetacored-darwin-arm64
+    # - zetacored-windows
+    # - zetacored-linux
+    # - zetacored-linux-arm64
+    # - zetaclientd-darwin
+    # - zetaclientd-darwin-arm64
+    # - zetaclientd-windows
+    # - zetaclientd-linux
+    # - zetaclientd-linux-arm64
+
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 changelog:
   sort: asc
   filters:
     exclude:
-    - '^docs:'
-    - '^test:'
+      - "^docs:"
+      - "^test:"
 snapshot:
   name_template: "{{ .Tag }}-next"
-
 # The lines beneath this are called `modelines`. See `:help modeline`
 # Feel free to remove those if you don't want/use them.
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
