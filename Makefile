@@ -1,7 +1,5 @@
 .PHONY: build
 
-
-PACKAGES=$(shell go list ./... | grep -v '/simulation')
 VERSION := $(shell git describe --tags)
 COMMIT := $(shell [ -z "${COMMIT_ID}" ] && git log -1 --format='%H' || echo ${COMMIT_ID} )
 BUILDTIME := $(shell date -u +"%Y%m%d.%H%M%S" )

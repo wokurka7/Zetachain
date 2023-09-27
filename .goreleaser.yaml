@@ -15,16 +15,11 @@ env:
   - CXX_linux_amd64=x86_64-linux-gnu-g++
   - CC_windows_amd64=x86_64-w64-mingw32-gcc
   - CXX_windows_amd64=x86_64-w64-mingw32-g++   
-
-# PACKAGES=$(shell go list ./... | grep -v '/simulation')
-# VERSION := $(shell git describe --tags)
-# COMMIT := $(shell [ -z "${COMMIT_ID}" ] && git log -1 --format='%H' || echo ${COMMIT_ID} )
-# BUILDTIME := $(shell date -u +"%Y%m%d.%H%M%S" )
-# DOCKER ?= docker
-# DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
-# GOFLAGS:=""   
   # - CC_windows_arm64=
   # - CXX_windows_arm64=
+  - VERSION = {{ .Version }}
+  - COMMIT = {{ .Commit }}
+  - BUILDTIME = {{ .Date }}
 
 before:
   hooks:
@@ -49,6 +44,9 @@ builds:
     goarch:
       - arm64
       - amd64
+    ignore:
+      - goos: windows
+        goarch: arm64
     flags: &default_testnet_flags
       - -tags=TESTNET,pebbledb,ledger,cgo
     ldflags: &default_ldflags
@@ -76,28 +74,28 @@ builds:
     goarch:
       - arm64
       - amd64
-    flags: *default_testnet_flags
-    ldflags: *default_ldflags
-
     ignore:
       - goos: windows
         goarch: arm64
+    flags: *default_testnet_flags
+    ldflags: *default_ldflags
+
 
 archives:
-  - name_template: "zetachain-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
-    format_overrides:
-      - goos: windows
-        format: zip
-    builds:
-      - zetacored-{{ .Os }}-{{ .Arch }} 
-      - zetaclientd-{{ .Os }}-{{ .Arch }} 
+  # - name_template: "zetachain-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+  #   format_overrides:
+  #     - goos: windows
+  #       format: zip
+  #   builds:
+  #     - zetacored-{{ .Os }}-{{ .Arch }} 
+  #     - zetaclientd-{{ .Os }}-{{ .Arch }} 
 
   - id: all
     name_template: "{{ .ProjectName }}_{{ .Version }}_all"
-    files:
-      - LICENSE*
-      - README*
-      - CHANGELOG*
+    # files:
+    #   - LICENSE*
+    #   - README*
+    #   - CHANGELOG*
     builds: 
       - zetacored-{{ .Os }}-{{ .Arch }} 
       - zetaclientd-{{ .Os }}-{{ .Arch }} 
