@@ -1,4 +1,3 @@
-# This is an example .goreleaser.yml file with some sensible defaults.
 # Make sure to check the documentation at https://goreleaser.com
 
 ## Test locally with `make release-dry-run`
@@ -15,23 +14,19 @@ env:
   - CXX_linux_amd64=x86_64-linux-gnu-g++
   - CC_windows_amd64=x86_64-w64-mingw32-gcc
   - CXX_windows_amd64=x86_64-w64-mingw32-g++   
-  # - CC_windows_arm64=
-  # - CXX_windows_arm64=
   - VERSION = {{ .Version }}
   - COMMIT = {{ .Commit }}
   - BUILDTIME = {{ .Date }}
+  # - CC_windows_arm64= NOT_CREATING_WINDOWS_ARM64_BINARIES
+  # - CXX_windows_arm64= NOT_CREATING_WINDOWS_ARM64_BINARIES
 
 before:
   hooks:
-    # You may remove this if you don't use go modules.
     - go mod download
     - go mod tidy
-
-    # you may remove this if you don't need go generate
-    # - go generate ./...
     
 builds:
-  - id: "zetacored-testnet"
+  - id: "zetacored_testnet"
     main: ./cmd/zetacored
     binary: zetacored
     env:
@@ -61,7 +56,7 @@ builds:
       - -X github.com/zeta-chain/zetacore/common.BuildTime=$(BUILDTIME)
       - -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb
 
-  - id: "zetaclientd-testnet"
+  - id: "zetaclientd_testnet"
     main: ./cmd/zetaclientd
     binary: zetaclientd
     env:
@@ -80,7 +75,7 @@ builds:
     flags: *default_testnet_flags
     ldflags: *default_ldflags
 
-  - id: "zetacored-mock-mainnet"
+  - id: "zetacored_mock_mainnet"
     main: ./cmd/zetacored
     binary: zetacored
     env:
@@ -100,7 +95,7 @@ builds:
       - -tags=MOCK_MAINNET,pebbledb,ledger,cgo
     ldflags: *default_ldflags
 
-  - id: "zetaclientd-mock-mainnet"
+  - id: "zetaclientd_mock_mainnet"
     main: ./cmd/zetaclientd
     binary: zetaclientd
     env:
@@ -119,30 +114,35 @@ builds:
     flags: *default_mock_mainnet_flags
     ldflags: *default_ldflags
 
+# Archives are not working correctly. Issues because all the binaries are names the same
 archives:
-  # - name_template: "zetachain-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
-  #   format_overrides:
-  #     - goos: windows
-  #       format: zip
-  #   builds:
-  #     - zetacored-testnet-{{ .Os }}-{{ .Arch }} 
-  #     - zetaclientd-testnet-{{ .Os }}-{{ .Arch }} 
+  - name_template: "zetachain_{{ .Version }}_all"
+    format_overrides:
+      - goos: windows
+        format: zip
+    builds:
+      - zetacored_testnet
+      - zetaclientd_testnet
+      - zetacored_mock_mainnet
+      - zetaclientd_mock_mainnet 
 
-  - id: testnet
-    name_template: "{{ .ProjectName }}-{{ .Version }}-testnet"
-    # files:
-    #   - LICENSE*
-    #   - README*
-    #   - CHANGELOG*
-    builds: 
-      - zetacored-testnet-{{ .Os }}-{{ .Arch }} 
-      - zetaclientd-testnet-{{ .Os }}-{{ .Arch }} 
+  # - id: testnet
+  #   name_template: "{{ .ProjectName }}_{{ .Version }}_testnet"
+  #   files:
+  #     - LICENSE
+  #     - readme.md
+  #   builds: 
+  #     - zetacored_testnet
+  #     - zetaclientd_testnet
 
-  - id: mock-mainnet
-    name_template: "{{ .ProjectName }}-{{ .Version }}-mock-mainnet"
+  # - id: mock_mainnet
+    name_template: "{{ .ProjectName }}_{{ .Version }}_mock_mainnet"
+    files:
+      - LICENSE
+      - readme.md
     builds: 
-      - zetacored-mock-mainnet-{{ .Os }}-{{ .Arch }} 
-      - zetaclientd-mock-mainnet-{{ .Os }}-{{ .Arch }} 
+      - zetacored_mock_mainnet
+      - zetaclientd_mock_mainnet 
 checksum:
   name_template: "checksums.txt"
 changelog:

@@ -32,7 +32,7 @@ message MsgRemoveFromOutTxTracker {
 
 ## MsgCreateTSSVoter
 
-Vote on creating a TSS key and recording the information about it (public
+CreateTSSVoter votes on creating a TSS key and recording the information about it (public
 key, participant and operator addresses, finalized and keygen heights).
 
 If the vote passes, the information about the TSS key is recorded on chain
@@ -84,7 +84,7 @@ message MsgNonceVoter {
 
 ## MsgVoteOnObservedOutboundTx
 
-Casts a vote on an outbound transaction observed on a connected chain (after
+VoteOnObservedOutboundTx casts a vote on an outbound transaction observed on a connected chain (after
 it has been broadcasted to and finalized on a connected chain). If this is
 the first vote, a new ballot is created. When a threshold of votes is
 reached, the ballot is finalized. When a ballot is finalized, the outbound
@@ -145,7 +145,7 @@ message MsgVoteOnObservedOutboundTx {
 
 ## MsgVoteOnObservedInboundTx
 
-Casts a vote on an inbound transaction observed on a connected chain. If this
+VoteOnObservedInboundTx casts a vote on an inbound transaction observed on a connected chain. If this
 is the first vote, a new ballot is created. When a threshold of votes is
 reached, the ballot is finalized. When a ballot is finalized, a new CCTX is
 created.

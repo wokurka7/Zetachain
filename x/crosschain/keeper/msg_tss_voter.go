@@ -16,7 +16,7 @@ import (
 
 // MESSAGES
 
-// Vote on creating a TSS key and recording the information about it (public
+// CreateTSSVoter votes on creating a TSS key and recording the information about it (public
 // key, participant and operator addresses, finalized and keygen heights).
 //
 // If the vote passes, the information about the TSS key is recorded on chain
@@ -117,7 +117,7 @@ func (k msgServer) CreateTSSVoter(goCtx context.Context, msg *types.MsgCreateTSS
 func (k msgServer) UpdateTssAddress(goCtx context.Context, msg *types.MsgUpdateTssAddress) (*types.MsgUpdateTssAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// TODO : Add a new policy type for updating the TSS address
-	if msg.Creator != k.zetaObserverKeeper.GetParams(ctx).GetAdminPolicyAccount(observerTypes.Policy_Type_update_keygen_block) {
+	if msg.Creator != k.zetaObserverKeeper.GetParams(ctx).GetAdminPolicyAccount(observerTypes.Policy_Type_group2) {
 		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "Update can only be executed by the correct policy account")
 	}
 	tss, ok := k.CheckIfTssPubkeyHasBeenGenerated(ctx, msg.TssPubkey)
@@ -127,4 +127,13 @@ func (k msgServer) UpdateTssAddress(goCtx context.Context, msg *types.MsgUpdateT
 	k.SetTssAndUpdateNonce(ctx, tss)
 
 	return &types.MsgUpdateTssAddressResponse{}, nil
+}
+
+// IsAuthorizedNodeAccount checks whether a signer is authorized to sign , by checking their address against the observer mapper which contains the observer list for the chain and type
+func (k Keeper) IsAuthorizedNodeAccount(ctx sdk.Context, address string) bool {
+	_, found := k.zetaObserverKeeper.GetNodeAccount(ctx, address)
+	if found {
+		return true
+	}
+	return false
 }
