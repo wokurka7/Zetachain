@@ -147,7 +147,7 @@ func StressTest(_ *cobra.Command, _ []string) {
 		goerliClient,
 		zevmClient,
 		cctxClient,
-		ZetaTxServer{}, // not used in stress test
+		&ZetaTxServer{}, // not used in stress test
 		fungibleClient,
 		authClient,
 		bankClient,

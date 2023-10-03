@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"sync"
 	"time"
 
@@ -36,7 +37,7 @@ type SmokeTest struct {
 	zevmClient   *ethclient.Client
 	goerliClient *ethclient.Client
 	btcRPCClient *rpcclient.Client
-	zetaTxServer ZetaTxServer
+	zetaTxServer *ZetaTxServer
 
 	cctxClient     crosschaintypes.QueryClient
 	fungibleClient fungibletypes.QueryClient
@@ -76,11 +77,79 @@ type SmokeTest struct {
 	SystemContractAddr ethcommon.Address
 }
 
+func (sm *SmokeTest) SendZetaToSelf(i int64) (*sdk.TxResponse, error) {
+	zts := sm.zetaTxServer
+	acc, err := zts.clientCtx.Keyring.Key(FungibleAdminName)
+	if err != nil {
+		return nil, err
+	}
+	addr, err := acc.GetAddress()
+	if err != nil {
+		return nil, err
+	}
+	msg := banktypes.NewMsgSend(addr, addr, sdk.NewCoins(sdk.NewCoin("azeta", sdk.NewInt(i))))
+	return zts.BroadcastLikeZetaclient(FungibleAdminName, 30000, msg)
+}
+
+func (sm *SmokeTest) RevertTx() (*sdk.TxResponse, error) {
+	zts := sm.zetaTxServer
+	acc, err := zts.clientCtx.Keyring.Key(FungibleAdminName)
+	if err != nil {
+		return nil, err
+	}
+	addr, err := acc.GetAddress()
+	if err != nil {
+		return nil, err
+	}
+	msg := fungibletypes.NewMsgUpdateSystemContract(addr.String(), "0x48f80608B672DC30DC7e3dbBd0343c5F02C738Eb")
+	return zts.BroadcastLikeZetaclient(FungibleAdminName, 300000, msg)
+}
+
+func (sm *SmokeTest) TestSequenceNumberMismatch() {
+	mismatchCount := 0
+	totalCount := 0
+	successCount := 0
+	// Test sequence number mismatch
+	ticker := time.NewTicker(100 * time.Millisecond)
+	i := int64(0)
+	for {
+		select {
+		case <-ticker.C:
+			var resp *sdk.TxResponse
+			var err error
+			if i%10 == 0 {
+				resp, err = sm.RevertTx()
+			} else {
+				resp, err = sm.SendZetaToSelf(i)
+			}
+
+			i++
+			totalCount++
+
+			if err != nil {
+				fmt.Printf("tx error %s\n", err.Error())
+				if resp != nil {
+					fmt.Printf("tx hash %s\n", resp.TxHash)
+				}
+				if resp.Code == 32 {
+					mismatchCount++
+					fmt.Printf("Test sequence number mismatch success %d, mismatch %d, total %d\n", successCount, mismatchCount, totalCount)
+				}
+				continue
+			}
+
+			fmt.Printf("SendZetaToSelf success, tx hash %s\n", resp.TxHash)
+			successCount++
+			fmt.Printf("Test sequence number mismatch success %d, mismatch %d, total %d\n", successCount, mismatchCount, totalCount)
+		}
+	}
+}
+
 func NewSmokeTest(
 	goerliClient *ethclient.Client,
 	zevmClient *ethclient.Client,
 	cctxClient crosschaintypes.QueryClient,
-	zetaTxServer ZetaTxServer,
+	zetaTxServer *ZetaTxServer,
 	fungibleClient fungibletypes.QueryClient,
 	authClient authtypes.QueryClient,
 	bankClient banktypes.QueryClient,

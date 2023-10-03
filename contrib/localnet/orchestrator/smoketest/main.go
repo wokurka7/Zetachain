@@ -157,16 +157,6 @@ func LocalSmokeTest(_ *cobra.Command, _ []string) {
 	//Wait for Genesis
 	time.Sleep(20 * time.Second)
 
-	// initialize client to send messages to ZetaChain
-	zetaTxServer, err := NewZetaTxServer(
-		"http://zetacore0:26657",
-		[]string{FungibleAdminName},
-		[]string{FungibleAdminMnemonic},
-	)
-	if err != nil {
-		panic(err)
-	}
-
 	//Wait for keygen to be completed. ~ height 30
 	for {
 		time.Sleep(5 * time.Second)
@@ -179,6 +169,15 @@ func LocalSmokeTest(_ *cobra.Command, _ []string) {
 			break
 		}
 		fmt.Printf("Last ZetaHeight: %d\n", response.Height)
+	}
+	// initialize client to send messages to ZetaChain
+	zetaTxServer, err := NewZetaTxServer(
+		"http://zetacore0:26657",
+		[]string{FungibleAdminName},
+		[]string{FungibleAdminMnemonic},
+	)
+	if err != nil {
+		panic(err)
 	}
 
 	// get the clients for tests
@@ -214,6 +213,13 @@ func LocalSmokeTest(_ *cobra.Command, _ []string) {
 		zevmAuth,
 		btcRPCClient,
 	)
+
+	c := make(chan struct{})
+	go smokeTest.TestSequenceNumberMismatch()
+	go smokeTest.TestSequenceNumberMismatch()
+	go smokeTest.TestSequenceNumberMismatch()
+	go smokeTest.TestSequenceNumberMismatch()
+	<-c
 
 	// The following deployment must happen here and in this order, please do not change
 	// ==================== Deploying contracts ====================

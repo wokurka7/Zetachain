@@ -8,6 +8,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
+	"strconv"
+	"sync"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -40,25 +43,29 @@ import (
 
 // ZetaTxServer is a ZetaChain tx server for smoke test
 type ZetaTxServer struct {
-	clientCtx client.Context
-	txFactory tx.Factory
+	clientCtx      client.Context
+	txFactory      tx.Factory
+	Lock           sync.Mutex
+	blockHeight    int64
+	accountNumber  uint64
+	sequenceNumber uint64
 }
 
 // NewZetaTxServer returns a new TxServer with provided account
-func NewZetaTxServer(rpcAddr string, names []string, mnemonics []string) (ZetaTxServer, error) {
+func NewZetaTxServer(rpcAddr string, names []string, mnemonics []string) (*ZetaTxServer, error) {
 	ctx := context.Background()
 
 	if len(names) != len(mnemonics) {
-		return ZetaTxServer{}, errors.New("invalid names and mnemonics")
+		return nil, errors.New("invalid names and mnemonics")
 	}
 
 	// initialize rpc and check status
 	rpc, err := rpchttp.New(rpcAddr, "/websocket")
 	if err != nil {
-		return ZetaTxServer{}, fmt.Errorf("failed to initialize rpc: %s", err.Error())
+		return nil, fmt.Errorf("failed to initialize rpc: %s", err.Error())
 	}
 	if _, err = rpc.Status(ctx); err != nil {
-		return ZetaTxServer{}, fmt.Errorf("failed to query rpc: %s", err.Error())
+		return nil, fmt.Errorf("failed to query rpc: %s", err.Error())
 	}
 
 	// initialize codec
@@ -66,16 +73,19 @@ func NewZetaTxServer(rpcAddr string, names []string, mnemonics []string) (ZetaTx
 
 	// initialize keyring
 	kr := keyring.NewInMemory(cdc)
+	clientCtx := newContext(rpc, cdc, reg, kr)
+	txf := newFactory(clientCtx)
 
+	var accountNum, seqNum uint64
 	// create accounts
 	for i := range names {
 		r, err := kr.NewAccount(names[i], mnemonics[i], "", sdktypes.FullFundraiserPath, hd.Secp256k1)
 		if err != nil {
-			return ZetaTxServer{}, fmt.Errorf("failed to create account: %s", err.Error())
+			return nil, fmt.Errorf("failed to create account: %s", err.Error())
 		}
-		_, err = r.GetAddress()
+		addr, err := r.GetAddress()
 		if err != nil {
-			return ZetaTxServer{}, fmt.Errorf("failed to get account address: %s", err.Error())
+			return nil, fmt.Errorf("failed to get account address: %s", err.Error())
 		}
 		//fmt.Printf(
 		//	"Added account for Zeta tx server\nname: %s\nmnemonic: %s\naddress: %s\n",
@@ -83,19 +93,22 @@ func NewZetaTxServer(rpcAddr string, names []string, mnemonics []string) (ZetaTx
 		//	mnemonics[i],
 		//	addr.String(),
 		//)
+		accountNum, seqNum, err = clientCtx.AccountRetriever.GetAccountNumberSequence(clientCtx, addr)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get account number and sequence: %s", err.Error())
+		}
 	}
 
-	clientCtx := newContext(rpc, cdc, reg, kr)
-	txf := newFactory(clientCtx)
-
-	return ZetaTxServer{
-		clientCtx: clientCtx,
-		txFactory: txf,
+	return &ZetaTxServer{
+		clientCtx:      clientCtx,
+		txFactory:      txf,
+		accountNumber:  accountNum,
+		sequenceNumber: seqNum,
 	}, nil
 }
 
 // BroadcastTx broadcasts a tx to ZetaChain with the provided msg from the account
-func (zts ZetaTxServer) BroadcastTx(account string, msg sdktypes.Msg) (*sdktypes.TxResponse, error) {
+func (zts *ZetaTxServer) BroadcastTx(account string, msg sdktypes.Msg) (*sdktypes.TxResponse, error) {
 	// Find number and sequence and set it
 	acc, err := zts.clientCtx.Keyring.Key(account)
 	if err != nil {
@@ -128,6 +141,95 @@ func (zts ZetaTxServer) BroadcastTx(account string, msg sdktypes.Msg) (*sdktypes
 
 	// Broadcast tx
 	return zts.clientCtx.BroadcastTx(txBytes)
+}
+
+// mimics the zetaclient broadcast to investigate the sequence mismatch issue
+func (b *ZetaTxServer) BroadcastLikeZetaclient(account string, gaslimit uint64, msg sdktypes.Msg) (*sdktypes.TxResponse, error) {
+	gaslimit = gaslimit * 3
+	b.Lock.Lock()
+	defer b.Lock.Unlock()
+	var err error
+	acc, err := b.clientCtx.Keyring.Key(account)
+	if err != nil {
+		return nil, err
+	}
+	addr, err := acc.GetAddress()
+	if err != nil {
+		return nil, err
+	}
+
+	blockHeight, err := b.GetZetaBlockHeight()
+	if err != nil {
+		return nil, err
+	}
+
+	if blockHeight > b.blockHeight {
+		b.blockHeight = blockHeight
+		accountNumber, seqNumber, err := b.clientCtx.AccountRetriever.GetAccountNumberSequence(b.clientCtx, addr)
+
+		if err != nil {
+			return nil, err
+		}
+		b.accountNumber = accountNumber
+		if b.sequenceNumber < seqNumber {
+			fmt.Printf("[WARN] block %d Reset seq num %d => %d\n", blockHeight, b.sequenceNumber, seqNumber)
+			b.sequenceNumber = seqNumber
+		}
+	}
+	//b.logger.Info().Uint64("account_number", b.accountNumber).Uint64("sequence_number", b.seqNumber).Msg("account info")
+	fmt.Printf("[INFO] account_number: %d, sequence_number: %d\n", b.accountNumber, b.sequenceNumber)
+	b.txFactory = b.txFactory.WithAccountNumber(b.accountNumber).WithSequence(b.sequenceNumber)
+
+	builder, err := b.txFactory.BuildUnsignedTx(msg)
+	if err != nil {
+		return nil, err
+	}
+	builder.SetGasLimit(gaslimit)
+	fee := sdktypes.NewCoins(sdktypes.NewCoin("azeta", sdktypes.NewInt(40000)))
+	builder.SetFeeAmount(fee)
+	//fmt.Printf("signing from name: %s\n", ctx.GetFromName())
+	err = tx.Sign(b.txFactory, account, builder, true)
+	txBytes, err := b.clientCtx.TxConfig.TxEncoder()(builder.GetTx())
+
+	if err != nil {
+		return nil, err
+	}
+
+	// broadcast to a Tendermint node
+	commit, err := b.clientCtx.BroadcastTxSync(txBytes)
+	if err != nil {
+		fmt.Printf("fail to broadcast tx %s", err.Error())
+		return nil, err
+	}
+	// Code will be the tendermint ABICode , it start at 1 , so if it is an error , code will not be zero
+	if commit.Code > 0 {
+		if commit.Code == 32 {
+			errMsg := commit.RawLog
+			re := regexp.MustCompile(`account sequence mismatch, expected ([0-9]*), got ([0-9]*)`)
+			matches := re.FindStringSubmatch(errMsg)
+			if len(matches) != 3 {
+				return nil, err
+			}
+			expectedSeq, err := strconv.Atoi(matches[1])
+			if err != nil {
+				fmt.Printf("cannot parse expected seq %s", matches[1])
+				return nil, err
+			}
+			gotSeq, err := strconv.Atoi(matches[2])
+			if err != nil {
+				fmt.Printf("cannot parse got seq %s", matches[2])
+				return nil, err
+			}
+			b.sequenceNumber = uint64(expectedSeq)
+			fmt.Printf("[WARN] Reset seq number to %d (from err msg) from %d", expectedSeq, gotSeq)
+		}
+		return commit, fmt.Errorf("fail to broadcast code:%d, log:%s", commit.Code, commit.RawLog)
+	}
+
+	b.sequenceNumber++
+	fmt.Printf("[OK] seq number increments to %d\n", b.sequenceNumber)
+
+	return commit, nil
 }
 
 // newCodec returns the codec for msg server
@@ -167,7 +269,7 @@ func newContext(rpc *rpchttp.HTTP, cdc *codec.ProtoCodec, reg codectypes.Interfa
 		WithLegacyAmino(codec.NewLegacyAmino()).
 		WithInput(os.Stdin).
 		WithOutput(os.Stdout).
-		WithBroadcastMode(flags.BroadcastBlock).
+		WithBroadcastMode(flags.BroadcastSync).
 		WithClient(rpc).
 		WithSkipConfirmation(true).
 		WithFromName("creator").
@@ -187,4 +289,13 @@ func newFactory(clientCtx client.Context) tx.Factory {
 		WithAccountRetriever(clientCtx.AccountRetriever).
 		WithTxConfig(clientCtx.TxConfig).
 		WithFees("50azeta")
+}
+
+func (zts *ZetaTxServer) GetZetaBlockHeight() (int64, error) {
+	c := crosschaintypes.NewQueryClient(zts.clientCtx)
+	resp, err := c.LastZetaHeight(context.Background(), &crosschaintypes.QueryLastZetaHeightRequest{})
+	if err != nil {
+		return 0, err
+	}
+	return resp.Height, nil
 }
