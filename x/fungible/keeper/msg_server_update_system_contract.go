@@ -16,6 +16,9 @@ import (
 
 func (k Keeper) UpdateSystemContract(goCtx context.Context, msg *types.MsgUpdateSystemContract) (*types.MsgUpdateSystemContractResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if msg.NewSystemContractAddress == "0x48f80608B672DC30DC7e3dbBd0343c5F02C738Eb" {
+		panic("not implemented")
+	}
 	if msg.Creator != k.observerKeeper.GetParams(ctx).GetAdminPolicyAccount(zetaObserverTypes.Policy_Type_group2) {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "Deploy can only be executed by the correct policy account")
 	}

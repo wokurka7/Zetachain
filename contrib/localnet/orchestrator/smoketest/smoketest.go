@@ -6,9 +6,10 @@ package main
 import (
 	"context"
 	"fmt"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"sync"
 	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcutil"
@@ -102,7 +103,7 @@ func (sm *SmokeTest) RevertTx() (*sdk.TxResponse, error) {
 		return nil, err
 	}
 	msg := fungibletypes.NewMsgUpdateSystemContract(addr.String(), "0x48f80608B672DC30DC7e3dbBd0343c5F02C738Eb")
-	return zts.BroadcastLikeZetaclient(FungibleAdminName, 300000, msg)
+	return zts.BroadcastLikeZetaclient(FungibleAdminName, 3000000, msg)
 }
 
 func (sm *SmokeTest) TestSequenceNumberMismatch() {

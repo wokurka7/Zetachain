@@ -158,24 +158,25 @@ func (b *ZetaTxServer) BroadcastLikeZetaclient(account string, gaslimit uint64, 
 		return nil, err
 	}
 
-	blockHeight, err := b.GetZetaBlockHeight()
+	//blockHeight, err := b.GetZetaBlockHeight()
+	//if err != nil {
+	//	return nil, err
+	//}
+	a, blockHeight, err := b.clientCtx.AccountRetriever.GetAccountWithHeight(b.clientCtx, addr)
 	if err != nil {
 		return nil, err
 	}
 
-	if blockHeight > b.blockHeight {
-		b.blockHeight = blockHeight
-		accountNumber, seqNumber, err := b.clientCtx.AccountRetriever.GetAccountNumberSequence(b.clientCtx, addr)
-
-		if err != nil {
-			return nil, err
-		}
-		b.accountNumber = accountNumber
-		if b.sequenceNumber < seqNumber {
-			fmt.Printf("[WARN] block %d Reset seq num %d => %d\n", blockHeight, b.sequenceNumber, seqNumber)
-			b.sequenceNumber = seqNumber
-		}
-	}
+	//if blockHeight > b.blockHeight {
+	b.blockHeight = blockHeight
+	accountNumber := a.GetAccountNumber()
+	seqNumber := a.GetSequence()
+	b.accountNumber = accountNumber
+	//if b.sequenceNumber < seqNumber {
+	fmt.Printf("[WARN] block %d Reset seq num %d => %d\n", blockHeight, b.sequenceNumber, seqNumber)
+	b.sequenceNumber = seqNumber
+	//}
+	//}
 	//b.logger.Info().Uint64("account_number", b.accountNumber).Uint64("sequence_number", b.seqNumber).Msg("account info")
 	fmt.Printf("[INFO] account_number: %d, sequence_number: %d\n", b.accountNumber, b.sequenceNumber)
 	b.txFactory = b.txFactory.WithAccountNumber(b.accountNumber).WithSequence(b.sequenceNumber)
@@ -198,7 +199,7 @@ func (b *ZetaTxServer) BroadcastLikeZetaclient(account string, gaslimit uint64, 
 	// broadcast to a Tendermint node
 	commit, err := b.clientCtx.BroadcastTxSync(txBytes)
 	if err != nil {
-		fmt.Printf("fail to broadcast tx %s", err.Error())
+		fmt.Printf("[ERROR] BroadcastTxSync tx %s", err.Error())
 		return nil, err
 	}
 	// Code will be the tendermint ABICode , it start at 1 , so if it is an error , code will not be zero
