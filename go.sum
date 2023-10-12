@@ -725,8 +725,8 @@ github.com/bombsimon/wsl/v3 v3.3.0/go.mod h1:st10JtZYLE4D5sC7b8xV4zTKZwAQjCH/Hy2
 github.com/bradfitz/go-smtpd v0.0.0-20170404230938-deb6d6237625/go.mod h1:HYsPBTaaSFSlLx/70C2HPIMNZpVV8+vt/A+FMnYP11g=
 github.com/breml/bidichk v0.2.3/go.mod h1:8u2C6DnAy0g2cEq+k/A2+tr9O1s+vHGxWn0LTc70T2A=
 github.com/breml/errchkjson v0.3.0/go.mod h1:9Cogkyv9gcT8HREpzi3TiqBxCqDzo8awa92zSDFcofU=
-github.com/brewmaster012/go-tss v0.0.0-20230724230849-ce080275bbad h1:/Jqi03d/vQ9SXDjubEKYGpv2usH5Ejjrmrdv405UFNo=
-github.com/brewmaster012/go-tss v0.0.0-20230724230849-ce080275bbad/go.mod h1:RYOe4ihG8KkoQQhW6ljiyxyW6F3CoZA3ozyyEb5HVmI=
+github.com/brewmaster012/go-tss v0.0.0-20231012152511-0b4c16d9c8fb h1:2zMHqgkvT/PcKUmxwdfcYzsPYptKGLB4MszRUFZ7Obo=
+github.com/brewmaster012/go-tss v0.0.0-20231012152511-0b4c16d9c8fb/go.mod h1:H+e9w86Cu1o9qshSC0O86D9KhQIklFMIHMxSFgZZzd8=
 github.com/bshuster-repo/logrus-logstash-hook v0.4.1/go.mod h1:zsTqEiSzDgAa/8GZR7E1qaXrhYNDKBYy5/dWPTIflbk=
 github.com/btcsuite/btcd v0.22.3 h1:kYNaWFvOw6xvqP0vR20RP1Zq1DVMBxEO8QN5d1/EfNg=
 github.com/btcsuite/btcd v0.22.3/go.mod h1:wqgTSL29+50LRkmOVknEdmt8ZojIzhuWvgu/iptuN7Y=
