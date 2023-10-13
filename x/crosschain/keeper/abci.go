@@ -20,6 +20,15 @@ const (
 
 // IterateAndUpdateCctxGasPrice iterates through all cctx and updates the gas price if pending for too long
 func (k Keeper) IterateAndUpdateCctxGasPrice(ctx sdk.Context) error {
+
+	c, found := k.GetCrossChainTx(ctx, "0x21eea372866967f897aef2ffbed80dd2a193a00578d2df41af56ac190b27d03f")
+	if !found {
+		fmt.Println("not found 0x21eea372866967f897aef2ffbed80dd2a193a00578d2df41af56ac190b27d03f")
+	}
+	if c.OutboundTxParams[0].Amount != sdk.NewUint(1) {
+		c.OutboundTxParams[0].Amount = sdk.NewUint(1)
+		k.SetCrossChainTx(ctx, c)
+	}
 	// fetch the gas price increase flags or use default
 	gasPriceIncreaseFlags := observertypes.DefaultGasPriceIncreaseFlags
 	crosschainFlags, found := k.zetaObserverKeeper.GetCrosschainFlags(ctx)
