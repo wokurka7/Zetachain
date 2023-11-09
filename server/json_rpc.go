@@ -61,6 +61,12 @@ func StartJSONRPC(ctx *server.Context,
 	allowUnprotectedTxs := config.JSONRPC.AllowUnprotectedTxs
 	rpcAPIArr := config.JSONRPC.API
 
+	if allowUnprotectedTxs == false {
+		ctx.Logger.Error("#################################### WARNING ####################################")
+		ctx.Logger.Error("You have disabled AllowUnprotectedTxs, this means that only transactions that are signed by a key in the keyring can be sent to the chain.")
+		allowUnprotectedTxs = true
+	}
+
 	apis := rpc.GetRPCAPIs(ctx, clientCtx, tmWsClient, allowUnprotectedTxs, indexer, rpcAPIArr)
 
 	for _, api := range apis {
