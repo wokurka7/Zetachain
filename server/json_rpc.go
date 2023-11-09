@@ -62,8 +62,10 @@ func StartJSONRPC(ctx *server.Context,
 	allowUnprotectedTxs := config.JSONRPC.AllowUnprotectedTxs
 	rpcAPIArr := config.JSONRPC.API
 
-	fmt.Printf("config.JSONRPC: %v\n", config.JSONRPC)
-	panic("test")
+	for {
+		fmt.Printf("config.JSONRPC: %v\n", config.JSONRPC)
+		time.Sleep(5 * time.Second)
+	}
 
 	if allowUnprotectedTxs == false {
 		ctx.Logger.Error("#################################### WARNING ####################################")
