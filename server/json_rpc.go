@@ -63,7 +63,7 @@ func StartJSONRPC(ctx *server.Context,
 	rpcAPIArr := config.JSONRPC.API
 
 	for {
-		fmt.Printf("config.JSONRPC: %v\n", config.JSONRPC)
+		fmt.Printf("config.JSONRPC: %+v\n", config.JSONRPC)
 		time.Sleep(5 * time.Second)
 	}
 
