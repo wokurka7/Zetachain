@@ -55,7 +55,7 @@ func (k Keeper) HandleEVMDeposit(
 		if err != nil {
 			return false, fmt.Errorf("HandleEVMDeposit: unable to decode address: %s", err.Error())
 		}
-
+		ctx.Logger().Info("HandleEVMDeposit: depositing ZRC20", "from", from, "to", to, "amount", msg.Amount.BigInt(), "coinType", msg.CoinType)
 		evmTxResponse, contractCall, err := k.fungibleKeeper.ZRC20DepositAndCallContract(
 			ctx,
 			from,
@@ -66,12 +66,14 @@ func (k Keeper) HandleEVMDeposit(
 			msg.CoinType,
 			msg.Asset,
 		)
+
 		if fungibletypes.IsContractReverted(evmTxResponse, err) || errShouldRevertCctx(err) {
 			return true, err
 		} else if err != nil {
 			return false, err
 		}
 
+		ctx.Logger().Info("HandleEVMDeposit: deposit ZRC20 successful")
 		// non-empty msg.Message means this is a contract call; therefore the logs should be processed.
 		// a withdrawal event in the logs could generate cctxs for outbound transactions.
 		if !evmTxResponse.Failed() && contractCall {

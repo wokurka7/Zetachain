@@ -81,6 +81,7 @@ func (k Keeper) PostTxProcessing(
 // from registered ZRC20 contract, new CCTX will be created to trigger and track outbound
 // transaction.
 func (k Keeper) ProcessLogs(ctx sdk.Context, logs []*ethtypes.Log, emittingContract ethcommon.Address, txOrigin string) error {
+	ctx.Logger().Info("Starting ProcessLogs")
 	system, found := k.fungibleKeeper.GetSystemContract(ctx)
 	if !found {
 		return fmt.Errorf("cannot find system contract")
@@ -279,12 +280,16 @@ func (k Keeper) ParseZRC20WithdrawalEvent(ctx sdk.Context, log ethtypes.Log) (*z
 		return nil, err
 	}
 
+	ctx.Logger().Info("ParseZRC20WithdrawalEvent: event address %s", event.Raw.Address.Hex())
+
 	coin, found := k.fungibleKeeper.GetForeignCoins(ctx, event.Raw.Address.Hex())
 	if !found {
 		return nil, fmt.Errorf("ParseZRC20WithdrawalEvent: cannot find foreign coin with contract address %s", event.Raw.Address.Hex())
 	}
+	ctx.Logger().Info("ParseZRC20WithdrawalEvent: coin %s", coin.String(), "chainID", coin.ForeignChainId)
 	chainID := coin.ForeignChainId
 	if common.IsBitcoinChain(chainID) {
+		ctx.Logger().Info("ParseZRC20WithdrawalEvent: coin %s is Bitcoin", coin.String())
 		if event.Value.Cmp(big.NewInt(0)) <= 0 {
 			return nil, fmt.Errorf("ParseZRC20WithdrawalEvent: invalid amount %s", event.Value.String())
 		}
