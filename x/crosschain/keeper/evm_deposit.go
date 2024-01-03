@@ -55,7 +55,7 @@ func (k Keeper) HandleEVMDeposit(
 		if err != nil {
 			return false, fmt.Errorf("HandleEVMDeposit: unable to decode address: %s", err.Error())
 		}
-		ctx.Logger().Info("HandleEVMDeposit: depositing ZRC20", "from", from, "to", to, "amount", msg.Amount.BigInt(), "coinType", msg.CoinType)
+		ctx.Logger().Info(fmt.Sprintf("HandleEVMDeposit: deposit ZRC20 to %s , senderChain %s", to.String(), senderChain.String()))
 		evmTxResponse, contractCall, err := k.fungibleKeeper.ZRC20DepositAndCallContract(
 			ctx,
 			from,
