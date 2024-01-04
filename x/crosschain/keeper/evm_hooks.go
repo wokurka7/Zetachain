@@ -284,7 +284,7 @@ func (k Keeper) ParseZRC20WithdrawalEvent(ctx sdk.Context, log ethtypes.Log) (*z
 
 	coin, found := k.fungibleKeeper.GetForeignCoins(ctx, event.Raw.Address.Hex())
 	if !found {
-		return nil, fmt.Errorf("ParseZRC20WithdrawalEvent: cannot find foreign coin with contract address %s", event.Raw.Address.Hex())
+		return nil, fmt.Errorf("ParseZRC20WithdrawalEvent: cannot find foreign coin with contract address %s , to : %s", event.Raw.Address.Hex(), string(event.To))
 	}
 	ctx.Logger().Info(fmt.Sprintf("ParseZRC20WithdrawalEvent: coin %s , chainID %d", coin.String(), coin.ForeignChainId))
 	chainID := coin.ForeignChainId
