@@ -36,10 +36,12 @@ func (k Keeper) CheckIfFinalizingVote(ctx sdk.Context, ballot types.Ballot) (typ
 func (k Keeper) IsAuthorized(ctx sdk.Context, address string, chain *common.Chain) bool {
 	isPresentInMapper := k.IsObserverPresentInMappers(ctx, address, chain)
 	if !isPresentInMapper {
+		ctx.Logger().Info(fmt.Sprintf("Observer not present in mapper | Observer :%s, chain %s", address, chain.String()))
 		return false
 	}
 	isTombstoned, err := k.IsOperatorTombstoned(ctx, address)
 	if err != nil || isTombstoned {
+		ctx.Logger().Info(fmt.Sprintf("Observer is tombstoned | Observer :%s, chain %s", address, chain.String()))
 		return false
 	}
 	return true
