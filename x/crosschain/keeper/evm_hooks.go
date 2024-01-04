@@ -289,7 +289,7 @@ func (k Keeper) ParseZRC20WithdrawalEvent(ctx sdk.Context, log ethtypes.Log) (*z
 	ctx.Logger().Info(fmt.Sprintf("ParseZRC20WithdrawalEvent: coin %s , chainID %d", coin.String(), coin.ForeignChainId))
 	chainID := coin.ForeignChainId
 	if common.IsBitcoinChain(chainID) {
-		ctx.Logger().Info("ParseZRC20WithdrawalEvent: coin %s is Bitcoin", coin.String())
+		ctx.Logger().Info(fmt.Sprintf("ParseZRC20WithdrawalEvent: coin %s is Bitcoin", coin.String()))
 		if event.Value.Cmp(big.NewInt(0)) <= 0 {
 			return nil, fmt.Errorf("ParseZRC20WithdrawalEvent: invalid amount %s", event.Value.String())
 		}
