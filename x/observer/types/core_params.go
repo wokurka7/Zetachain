@@ -128,6 +128,19 @@ func GetCoreParams() CoreParamsList {
 				OutboundTxScheduleInterval:  2,
 				OutboundTxScheduleLookahead: 5,
 			},
+			{
+				ChainId:                     common.ZetaPrivnetChain().ChainId,
+				ConfirmationCount:           1,
+				ZetaTokenContractAddress:    "",
+				ConnectorContractAddress:    "",
+				Erc20CustodyContractAddress: "",
+				InTxTicker:                  2,
+				OutTxTicker:                 2,
+				WatchUtxoTicker:             0,
+				GasPriceTicker:              5,
+				OutboundTxScheduleInterval:  0,
+				OutboundTxScheduleLookahead: 0,
+			},
 		},
 	}
 }
