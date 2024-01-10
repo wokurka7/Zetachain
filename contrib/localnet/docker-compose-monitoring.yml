@@ -40,6 +40,20 @@ services:
     environment:
       - GETH=http://eth:8545
 
+  cosmos-validators-exporter:
+    image: cosmos-validators-exporter:latest
+    container_name: cosmos-validators-exporter
+    hostname: cosmos-validators-exporter
+    volumes:
+      - ./zetachain-exporter/config.example.toml:/app/config.example.toml
+    ports:
+      - "9560:9560"
+    networks:
+      mynetwork:
+        ipv4_address: 172.20.0.33
+#    environment:
+#      - GETH=http://eth:8545
+
 networks:
   mynetwork:
     ipam:

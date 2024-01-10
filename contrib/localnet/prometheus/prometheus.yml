@@ -37,3 +37,9 @@ scrape_configs:
     # scheme defaults to 'http'.
     static_configs:
       - targets: ["172.20.0.32:9015"]
+
+  - job_name: "cosmos-validators-exporter"
+    scrape_interval: 60s
+    scrape_timeout: 60s
+    static_configs:
+      - targets: ["172.20.0.33:9560"]

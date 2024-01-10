@@ -1,0 +1,113 @@
+# Global timeout for RPC queries, in seconds. Defaults to 5.
+timeout = 5
+# The address the exporter will listen on .Defaults to ":9560".
+listen-address = ":9560"
+
+# Logging config
+[log]
+# Log level. Change it to "debug" or even trace for more verbosity and debugging. Defaults to "info".
+level = "debug"
+# Whether all the logs should be written in JSON instead of a pretty-printed text. Useful if you have
+# logging solutions, like Elastic stack. Defaults to false.
+json = false
+
+# Per-chain config.
+[[chains]]
+# Chain name that will go into labels. Required.
+name = "zetachain"
+# LCD endpoint to query data from. Required.
+lcd-endpoint = "http://172.20.0.11:1317/"
+# Chain's base denom.
+# This value is quite useless by itself, but it's exposed in `cosmos_validators_exporter_base_denom` metric,
+# which later can be joined with other metrics (such as, total delegated tokens)
+# and the price can be calculated based on that.
+base-denom = "ubtsg"
+# Denoms info.
+# Used to 1) be exposed as a standalone metric, and 2) when calculating metric for token price.
+# This is an an array of objects with following values:
+# 1. coingecko-currency
+# Coingecko currency, specify it if you want to also get the wallet balance
+# in total in USD. Optional.
+# 2. dex-screener-chain-id and dex-screener-pair.
+# dexscreener.com's chain ID (usually ""osmosis") and pair (usually pool ID).
+# Won't be used if coingecko-currency is provided.
+# Either coingecko-currency or these two params are required for getting token price.
+# 3. denom
+# The actual denom value (such as "uatom" for Cosmos Hub or "ibc/xxxxx" for IBC denoms). Required.
+# 4. display-denom
+# The denom that'll be returned in labels. Required.
+# 5. denom-coefficient
+# The coefficient you need to multiply base denom to to get 1 token on Coingecko/DexScreener.
+# Is exposed by `cosmos_validators_exporter_denom_coefficient` metric.
+# Optional, defaults to 1_000_000.
+# You can calculate the actual price of something by doing the following:
+# 1) taking the actual metric (either with "denom" label, like commission, or joining it with "base-denom" label
+# of `cosmos_validators_exporter_base_denom` metric for the chain, which will add the label)
+# 2) divide and join it with `cosmos_validators_exporter_denom_coefficient` metric for this chain for this denom
+# 3) multiply it with `cosmos_validators_exporter_price` metric for this denom/chain.
+# For example, with denom = "uatom", display-denom = "atom", "coingecko-currency" = "cosmos",
+# if you have 10 ATOM unclaimed commission, and $ATOM price = 10, here's what'll happen on each step:
+# 1) will return a metric with labels/values like this:
+# {chain="cosmos",address="cosmosvaloperxxxx",denom="uatom"} 10000000
+# 2) will return a metric like this
+# {chain="cosmos",address="cosmosvaloperxxxx",denom="uatom",display-denom="atom"} 10
+# 3) will return a metric like this:
+# {chain="cosmos",address="cosmosvaloperxxxx",denom="uatom",display-denom="atom"} 100
+# which you can use to display a worthwhile of your unclaimed commission and use display-denom
+# label for legend.
+denoms = [
+    { denom = "uatom", display-denom = "atom", coingecko-currency = "cosmos", denom-coefficient = 1000000, dex-screener-chain-id = "osmosis", dex-screener-pair-id = "1" },
+]
+# Bech32 prefix for a wallet address (example: "cosmos" for a Cosmos wallet). If omitted,
+# the self-delegation metric will not be present.
+bech-wallet-prefix = "zetachain"
+# List of validators to monitor.
+# Address is required, consensus-address is optional but will result in omitting
+# signing-infos metrics (like missed blocks counter).
+# You can get your consensus-address by running "<appd> tendermint show-address" on your validator node,
+# if you are not using KMS solutions.
+# If you are using it to track a consumer chain validator and if you are using the assigned key,
+# please make sure to use the consensus address of this chain and not the provider chain one.
+validators = [
+    { address = "zetavaloper18yru2f6y4nx3m0utdp34h0zk95yzvs098ea3z3", consensus-address = "zetavalcons1kdywrhy5mw9r4gw7x39ckmzp5n73nh47xykwj4" }
+]
+# List of queries to enable/disable.
+# If the list is not provided, or the value for query is not specified,
+# then this query will be enabled. Useful if some queries on some chains are broken or
+# do not return any meaningful value (like signing info on e-Money) or are too heavy and
+# the node can't handle such requests (like delegators count on Cosmos Hub).
+[chains.queries]
+# Query for validator info
+validator = true
+# Query for delegators count
+delegations = true
+# Query for unbonding delegations count
+unbonds = true
+# Query for self-delegated amount
+self-delegation = true
+# Query for all delegators count/ranking. Also used in total bonded tokens calculation.
+validators = true
+# Query for validator unclaimed commission
+commission = true
+# Query for validator unclaimed self-delegated rewards
+rewards = true
+# Query for validator wallet balance
+balance = true
+# Query for validator signing info
+signing-info = true
+# Query for chain slashing params/missed blocks window
+slashing-params = true
+# Query for chain staking params/max validators count
+staking-params = true
+
+## There can be multiple chains.
+#[[chains]]
+#name = "emoney"
+#lcd-endpoint = "https://api.emoney.quokkastake.io"
+#base-denom = "ungm"
+#denoms = [
+#    { denom = "ungm", display-denom = "ngm", coingecko-currency = "emoney" }
+#]
+#validators = [
+#    { address = "emoneyvaloper1jk4n79c5gv36972ptnly3rvx5nvn3hl3hgly9g" }
+#]
