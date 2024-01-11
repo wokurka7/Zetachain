@@ -187,13 +187,15 @@ func (AppModule) ConsensusVersion() uint64 { return 4 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the crosschain module.
 func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
-	params := am.keeper.FeemarketKeeper.GetParams(ctx)
-	params.ElasticityMultiplier = 4
-	params.BaseFeeChangeDenominator = 300
-	params.MinGasMultiplier = sdk.NewDecWithPrec(50, 2)
-	params.BaseFee = params.MinGasPrice.TruncateInt()
+	if ctx.BlockHeight() <= 1657845 {
+		params := am.keeper.FeemarketKeeper.GetParams(ctx)
+		params.ElasticityMultiplier = 4
+		params.BaseFeeChangeDenominator = 300
+		params.MinGasMultiplier = sdk.NewDecWithPrec(50, 2)
+		//params.BaseFee = params.MinGasPrice.TruncateInt()
 
-	am.keeper.FeemarketKeeper.SetParams(ctx, params)
+		am.keeper.FeemarketKeeper.SetParams(ctx, params)
+	}
 
 	err := am.keeper.IterateAndUpdateCctxGasPrice(ctx)
 	if err != nil {
