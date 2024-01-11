@@ -11,6 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/zeta-chain/zetacore/x/crosschain/types"
+
+	feemarketkeeper "github.com/evmos/ethermint/x/feemarket/keeper"
 )
 
 type (
@@ -25,6 +27,8 @@ type (
 		bankKeeper         types.BankKeeper
 		zetaObserverKeeper types.ObserverKeeper
 		fungibleKeeper     types.FungibleKeeper
+
+		FeemarketKeeper feemarketkeeper.Keeper
 	}
 )
 
@@ -38,6 +42,7 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	zetaObserverKeeper types.ObserverKeeper,
 	fungibleKeeper types.FungibleKeeper,
+	feemarketKeeper feemarketkeeper.Keeper,
 ) *Keeper {
 	// ensure governance module account is set
 	// FIXME: enable this check! (disabled for now to avoid unit test panic)
@@ -55,6 +60,7 @@ func NewKeeper(
 		bankKeeper:         bankKeeper,
 		zetaObserverKeeper: zetaObserverKeeper,
 		fungibleKeeper:     fungibleKeeper,
+		FeemarketKeeper:    feemarketKeeper,
 	}
 }
 

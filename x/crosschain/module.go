@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
@@ -188,10 +187,19 @@ func (AppModule) ConsensusVersion() uint64 { return 4 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the crosschain module.
 func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
+	params := am.keeper.FeemarketKeeper.GetParams(ctx)
+	params.ElasticityMultiplier = 4
+	params.BaseFeeChangeDenominator = 300
+	params.MinGasMultiplier = sdk.NewDecWithPrec(50, 2)
+	params.BaseFee = params.MinGasPrice.TruncateInt()
+
+	am.keeper.FeemarketKeeper.SetParams(ctx, params)
+
 	err := am.keeper.IterateAndUpdateCctxGasPrice(ctx)
 	if err != nil {
 		ctx.Logger().Error("Error iterating and updating pending cctx gas price", "err", err.Error())
 	}
+
 }
 
 // EndBlock executes all ABCI EndBlock logic respective to the crosschain module. It

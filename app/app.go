@@ -404,6 +404,7 @@ func New(
 		app.BankKeeper,
 		app.ZetaObserverKeeper,
 		&app.FungibleKeeper,
+		app.FeeMarketKeeper,
 	)
 	app.GroupKeeper = groupkeeper.NewKeeper(keys[group.StoreKey], appCodec, app.MsgServiceRouter(), app.AccountKeeper, group.Config{
 		MaxExecutionPeriod: 2 * time.Hour, // Two hours.
@@ -487,6 +488,7 @@ func New(
 	// NOTE: staking module is required if HistoricalEntries param > 0
 
 	app.mm.SetOrderBeginBlockers(
+		crosschaintypes.ModuleName,
 		upgradetypes.ModuleName,
 		evmtypes.ModuleName,
 		distrtypes.ModuleName,
@@ -502,7 +504,6 @@ func New(
 		group.ModuleName,
 		vestingtypes.ModuleName,
 		feemarkettypes.ModuleName,
-		crosschaintypes.ModuleName,
 		observertypes.ModuleName,
 		fungibleModuleTypes.ModuleName,
 		emissionsModuleTypes.ModuleName,
