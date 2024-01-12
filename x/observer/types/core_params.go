@@ -104,7 +104,7 @@ func GetCoreParams() CoreParamsList {
 			},
 			{
 				ChainId:                     common.BtcRegtestChain().ChainId,
-				ConfirmationCount:           10,
+				ConfirmationCount:           2,
 				ZetaTokenContractAddress:    "",
 				ConnectorContractAddress:    "",
 				Erc20CustodyContractAddress: "",
