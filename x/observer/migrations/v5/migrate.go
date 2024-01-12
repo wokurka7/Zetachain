@@ -19,9 +19,9 @@ type observerKeeper interface {
 }
 
 func MigrateStore(ctx sdk.Context, observerKeeper observerKeeper) error {
-	if err := MigrateObserverMapper(ctx, observerKeeper.StoreKey(), observerKeeper.Codec()); err != nil {
-		return err
-	}
+	//if err := MigrateObserverMapper(ctx, observerKeeper.StoreKey(), observerKeeper.Codec()); err != nil {
+	//	return err
+	//}
 	return MigrateObserverParams(ctx, observerKeeper)
 }
 
