@@ -114,6 +114,8 @@ func (k msgServer) VoteOnObservedInboundTx(goCtx context.Context, msg *types.Msg
 		}
 	}
 
+	ctx.Logger().Info("NEW EXECUTED CCTX", "msg", msg.String())
+
 	// ******************************************************************************
 	// below only happens when ballot is finalized: exactly when threshold vote is in
 	// ******************************************************************************
