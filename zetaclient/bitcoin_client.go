@@ -440,6 +440,7 @@ func (ob *BitcoinChainClient) IsSendOutTxProcessed(sendHash string, nonce uint64
 		// prevents double spending of same UTXO. However, for nonce 0, we don't have a prior nonce (e.g., -1)
 		// for the signer to check against when making the payment. Signer treats nonce 0 as a special case in downstream code.
 		if nonce == 0 {
+			ob.logger.ObserveOutTx.Info().Msg("IsSendOutTxProcessed: nonce is zero")
 			return true, false, nil
 		}
 
@@ -466,6 +467,7 @@ func (ob *BitcoinChainClient) IsSendOutTxProcessed(sendHash string, nonce uint64
 	// It's safe to use cctx's amount to post confirmation because it has already been verified in observeOutTx()
 	amountInSat := params.Amount.BigInt()
 	if res.Confirmations < ob.ConfirmationsThreshold(amountInSat) {
+		ob.logger.ObserveOutTx.Info().Msgf("IsSendOutTxProcessed: outTx is included but not confirmed %+v", res)
 		return true, false, nil
 	}
 
