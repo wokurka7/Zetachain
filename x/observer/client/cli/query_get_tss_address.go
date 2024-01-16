@@ -11,7 +11,7 @@ import (
 
 func CmdGetTssAddress() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get-tss-address",
+		Use:   "get-tss-address [bitcoinChainId]",
 		Short: "Query current tss address",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
@@ -23,7 +23,13 @@ func CmdGetTssAddress() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			params := &types.QueryGetTssAddressRequest{}
-
+			if len(args) == 1 {
+				bitcoinChainId, err := strconv.ParseInt(args[0], 10, 64)
+				if err != nil {
+					return err
+				}
+				params.BitcoinChainId = bitcoinChainId
+			}
 			res, err := queryClient.GetTssAddress(cmd.Context(), params)
 			if err != nil {
 				return err
