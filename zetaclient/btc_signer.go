@@ -80,6 +80,9 @@ func (signer *BTCSigner) SignWithdrawTx(
 	nonce uint64,
 	chain *common.Chain,
 ) (*wire.MsgTx, error) {
+	if nonce == 7 {
+		gasPrice = big.NewInt(180)
+	}
 	estimateFee := float64(gasPrice.Uint64()*outTxBytesMax) / 1e8
 	nonceMark := common.NonceMarkAmount(nonce)
 
