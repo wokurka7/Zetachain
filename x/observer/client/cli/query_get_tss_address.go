@@ -66,7 +66,7 @@ func CmdGetTssAddressByFinalizedZetaHeight() *cobra.Command {
 				FinalizedZetaHeight: finalizedZetaHeight,
 			}
 			if len(args) == 2 {
-				bitcoinChainId, err := strconv.ParseInt(args[0], 10, 64)
+				bitcoinChainId, err := strconv.ParseInt(args[1], 10, 64)
 				if err != nil {
 					return err
 				}
