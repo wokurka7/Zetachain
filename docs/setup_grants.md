@@ -43,7 +43,10 @@ zetacored tx authz grant $hotkey_address 'generic' --msg-type='/zetachain.zetaco
 zetacored tx authz grant $hotkey_address 'generic' --msg-type='/zetachain.zetacore.observer.MsgAddBlockHeader' --from=operator --keyring-backend=test --chain-id=chain_id --node=$node_ip --gas=auto --gas-adjustment=1.5 --gas-prices=$min_gas_price --yes
 
 ```
-
+- View grants 
+```shell
+zetacored q authz grants $operator_address $hotkey_address --node=$node_ip
+```
 
 - Remove the node folder once the transactions are confirmed
 
