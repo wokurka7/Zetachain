@@ -89,7 +89,8 @@ then
   cat $HOME/.zetacored/config/genesis.json | jq '.app_state["evm"]["params"]["evm_denom"]="azeta"' > $HOME/.zetacored/config/tmp_genesis.json && mv $HOME/.zetacored/config/tmp_genesis.json $HOME/.zetacored/config/genesis.json
   cat $HOME/.zetacored/config/genesis.json | jq '.consensus_params["block"]["max_gas"]="500000000"' > $HOME/.zetacored/config/tmp_genesis.json && mv $HOME/.zetacored/config/tmp_genesis.json $HOME/.zetacored/config/genesis.json
   cat $HOME/.zetacored/config/genesis.json | jq '.app_state["gov"]["voting_params"]["voting_period"]="100s"' > $HOME/.zetacored/config/tmp_genesis.json && mv $HOME/.zetacored/config/tmp_genesis.json $HOME/.zetacored/config/genesis.json
-  cat $HOME/.zetacored/config/genesis.json | jq '.app_state["feemarket"]["params"]["min_gas_price"]="10000000000.0000"' > $HOME/.zetacored/config/tmp_genesis.json && mv $HOME/.zetacored/config/tmp_genesis.json $HOME/.zetacored/config/genesis.json
+  cat $HOME/.zetacored/config/genesis.json | jq '.app_state["feemarket"]["params"]["min_gas_price"]="100000000000.0000"' > $HOME/.zetacored/config/tmp_genesis.json && mv $HOME/.zetacored/config/tmp_genesis.json $HOME/.zetacored/config/genesis.json
+  cat $HOME/.zetacored/config/genesis.json | jq '.app_state["feemarket"]["params"]["no_base_fee"]="true"' > $HOME/.zetacored/config/tmp_genesis.json && mv $HOME/.zetacored/config/tmp_genesis.json $HOME/.zetacored/config/genesis.json
 
 # set admin account
   zetacored add-genesis-account zeta1srsq755t654agc0grpxj4y3w0znktrpr9tcdgk 100000000000000000000000000azeta

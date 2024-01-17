@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"runtime/debug"
 
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ethante "github.com/evmos/ethermint/app/ante"
 	cctxtypes "github.com/zeta-chain/zetacore/x/crosschain/types"
@@ -99,7 +100,7 @@ func NewAnteHandler(options ethante.HandlerOptions) (sdk.AnteHandler, error) {
 				switch msg.(type) {
 				// treat these three msg types differently because they might call EVM which results in massive gas consumption
 				// For these two msg types, we don't check gas limit by using a different ante handler
-				case *cctxtypes.MsgGasPriceVoter, *cctxtypes.MsgVoteOnObservedInboundTx:
+				case *cctxtypes.MsgGasPriceVoter, *cctxtypes.MsgVoteOnObservedInboundTx, *banktypes.MsgSend:
 					found = true
 					break
 				case *stakingtypes.MsgCreateValidator:
