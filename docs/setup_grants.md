@@ -34,13 +34,13 @@ NOTE : the console will output the mnemonic for the hotkey. Save this mnemonic .
 
 - Create grants 
 ```shell
-zetacored tx authz grant $hotkey_address 'generic' --msg-type='/zetachain.zetacore.crosschain.MsgVoteOnObservedInboundTx' --from=operator --keyring-backend=test --chain-id=chain_id --node=node_ip --gas=auto --gas-adjustment=1.5 --gas-prices=$min_gas_price --yes
-zetacored tx authz grant $hotkey_address 'generic' --msg-type='/zetachain.zetacore.crosschain.MsgGasPriceVoter' --from=operator --keyring-backend=test --chain-id=chain_id --node=node_ip --gas=auto --gas-adjustment=1.5 --gas-prices=$min_gas_price --yes
-zetacored tx authz grant $hotkey_address 'generic' --msg-type='/zetachain.zetacore.crosschain.MsgVoteOnObservedOutboundTx' --from=operator --keyring-backend=test --chain-id=chain_id --node=node_ip --gas=auto --gas-adjustment=1.5 --gas-prices=$min_gas_price --yes
-zetacored tx authz grant $hotkey_address 'generic' --msg-type='/zetachain.zetacore.crosschain.MsgCreateTSSVoter' --from=operator --keyring-backend=test --chain-id=chain_id --node=$node_ip --gas=auto --gas-adjustment=1.5 --gas-prices=$min_gas_price --yes
-zetacored tx authz grant $hotkey_address 'generic' --msg-type='/zetachain.zetacore.crosschain.MsgAddToOutTxTracker' --from=operator --keyring-backend=test --chain-id=chain_id --node=$node_ip --gas=auto --gas-adjustment=1.5 --gas-prices=$min_gas_price --yes
-zetacored tx authz grant $hotkey_address 'generic' --msg-type='/zetachain.zetacore.observer.MsgAddBlameVote' --from=operator --keyring-backend=test --chain-id=chain_id --node=$node_ip --gas=auto --gas-adjustment=1.5 --gas-prices=$min_gas_price --yes
-zetacored tx authz grant $hotkey_address 'generic' --msg-type='/zetachain.zetacore.observer.MsgAddBlockHeader' --from=operator --keyring-backend=test --chain-id=chain_id --node=$node_ip --gas=auto --gas-adjustment=1.5 --gas-prices=$min_gas_price --yes
+zetacored tx authz grant $hotkey_address 'generic' --msg-type='/zetachain.zetacore.crosschain.MsgVoteOnObservedInboundTx' --from=operator --keyring-backend=test --chain-id=$chain_id --node=$node_ip --gas=auto --gas-adjustment=1.5 --gas-prices=$min_gas_price --yes
+zetacored tx authz grant $hotkey_address 'generic' --msg-type='/zetachain.zetacore.crosschain.MsgGasPriceVoter' --from=operator --keyring-backend=test --chain-id=$chain_id --node=$node_ip --gas=auto --gas-adjustment=1.5 --gas-prices=$min_gas_price --yes
+zetacored tx authz grant $hotkey_address 'generic' --msg-type='/zetachain.zetacore.crosschain.MsgVoteOnObservedOutboundTx' --from=operator --keyring-backend=test --chain-id=$chain_id --node=$node_ip --gas=auto --gas-adjustment=1.5 --gas-prices=$min_gas_price --yes
+zetacored tx authz grant $hotkey_address 'generic' --msg-type='/zetachain.zetacore.crosschain.MsgCreateTSSVoter' --from=operator --keyring-backend=test --chain-id=$chain_id --node=$node_ip --gas=auto --gas-adjustment=1.5 --gas-prices=$min_gas_price --yes
+zetacored tx authz grant $hotkey_address 'generic' --msg-type='/zetachain.zetacore.crosschain.MsgAddToOutTxTracker' --from=operator --keyring-backend=test --chain-id=$chain_id --node=$node_ip --gas=auto --gas-adjustment=1.5 --gas-prices=$min_gas_price --yes
+zetacored tx authz grant $hotkey_address 'generic' --msg-type='/zetachain.zetacore.observer.MsgAddBlameVote' --from=operator --keyring-backend=test --chain-id=$chain_id --node=$node_ip --gas=auto --gas-adjustment=1.5 --gas-prices=$min_gas_price --yes
+zetacored tx authz grant $hotkey_address 'generic' --msg-type='/zetachain.zetacore.observer.MsgAddBlockHeader' --from=operator --keyring-backend=test --chain-id=$chain_id --node=$node_ip --gas=auto --gas-adjustment=1.5 --gas-prices=$min_gas_price --yes
 
 ```
 - View grants 
