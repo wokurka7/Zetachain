@@ -986,7 +986,7 @@ func (ob *EVMChainClient) observeZetaSent(startBlock, toBlock uint64) uint64 {
 				"observeZetaSent: error getting inbound vote msg for tx %s chain %d", event.Raw.TxHash.Hex(), ob.chain.ChainId)
 			continue
 		}
-		zetaHash, ballot, err := ob.zetaClient.PostSend(PostSendNonEVMGasLimit, &msg)
+		zetaHash, ballot, err := ob.zetaClient.PostSend(common.PostSendNonEVMGasLimit, &msg)
 		if err != nil {
 			ob.logger.ExternalChainWatcher.Error().Err(err).Msgf(
 				"observeZetaSent: error posting event to zeta core for tx %s at height %d for chain %d",
@@ -1065,7 +1065,7 @@ func (ob *EVMChainClient) observeERC20Deposited(startBlock, toBlock uint64) uint
 				"observeERC20Deposited: error getting inbound vote msg for tx %s chain %d", event.Raw.TxHash.Hex(), ob.chain.ChainId)
 			continue
 		}
-		zetaHash, ballot, err := ob.zetaClient.PostSend(PostSendEVMGasLimit, &msg)
+		zetaHash, ballot, err := ob.zetaClient.PostSend(common.PostSendEVMGasLimit, &msg)
 		if err != nil {
 			ob.logger.ExternalChainWatcher.Error().Err(err).Msgf(
 				"observeERC20Deposited: error posting event to zeta core for tx %s at height %d for chain %d",
@@ -1148,7 +1148,7 @@ func (ob *EVMChainClient) observeTssRecvd(startBlock, toBlock uint64, flags obse
 				if msg == nil {
 					continue
 				}
-				zetaHash, ballot, err := ob.zetaClient.PostSend(PostSendEVMGasLimit, msg)
+				zetaHash, ballot, err := ob.zetaClient.PostSend(common.PostSendEVMGasLimit, msg)
 				if err != nil {
 					ob.logger.ExternalChainWatcher.Error().Err(err).Msgf(
 						"observeTssRecvd: error posting to zeta core for tx %s at height %d for chain %d", tx.Hash().Hex(), bn, ob.chain.ChainId)

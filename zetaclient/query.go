@@ -53,12 +53,12 @@ func (b *ZetaCoreBridge) GetChainParams() ([]*observertypes.ChainParams, error) 
 	var err error
 
 	resp := &observertypes.QueryGetChainParamsResponse{}
-	for i := 0; i <= DefaultRetryCount; i++ {
+	for i := 0; i <= common.DefaultRetryCount; i++ {
 		resp, err = client.GetChainParams(context.Background(), &observertypes.QueryGetChainParamsRequest{})
 		if err == nil {
 			return resp.ChainParams.ChainParams, nil
 		}
-		time.Sleep(DefaultRetryInterval * time.Second)
+		time.Sleep(common.DefaultRetryInterval * time.Second)
 	}
 	return nil, fmt.Errorf("failed to get chain params | err %s", err.Error())
 }
@@ -107,12 +107,12 @@ func (b *ZetaCoreBridge) GetObserverList() ([]string, error) {
 	var err error
 	client := observertypes.NewQueryClient(b.grpcConn)
 
-	for i := 0; i <= DefaultRetryCount; i++ {
+	for i := 0; i <= common.DefaultRetryCount; i++ {
 		resp, err := client.ObserverSet(context.Background(), &observertypes.QueryObserverSet{})
 		if err == nil {
 			return resp.Observers, nil
 		}
-		time.Sleep(DefaultRetryInterval * time.Second)
+		time.Sleep(common.DefaultRetryInterval * time.Second)
 	}
 	return nil, err
 }
@@ -189,12 +189,12 @@ func (b *ZetaCoreBridge) GetNodeInfo() (*tmservice.GetNodeInfoResponse, error) {
 	var err error
 
 	client := tmservice.NewServiceClient(b.grpcConn)
-	for i := 0; i <= DefaultRetryCount; i++ {
+	for i := 0; i <= common.DefaultRetryCount; i++ {
 		res, err := client.GetNodeInfo(context.Background(), &tmservice.GetNodeInfoRequest{})
 		if err == nil {
 			return res, nil
 		}
-		time.Sleep(DefaultRetryInterval * time.Second)
+		time.Sleep(common.DefaultRetryInterval * time.Second)
 	}
 	return nil, err
 }
@@ -229,6 +229,18 @@ func (b *ZetaCoreBridge) GetBaseGasPrice() (int64, error) {
 	return resp.Params.BaseFee.Int64(), nil
 }
 
+func (b *ZetaCoreBridge) GetBaseGasPriceInt() (sdkmath.Int, error) {
+	client := feemarkettypes.NewQueryClient(b.grpcConn)
+	resp, err := client.Params(context.Background(), &feemarkettypes.QueryParamsRequest{})
+	if err != nil {
+		return 0, err
+	}
+	if resp.Params.BaseFee.IsNil() {
+		return 0, fmt.Errorf("base fee is nil")
+	}
+	return resp.Params.BaseFee, nil
+}
+
 func (b *ZetaCoreBridge) GetBallotByID(id string) (*observertypes.QueryBallotByIdentifierResponse, error) {
 	client := observertypes.NewQueryClient(b.grpcConn)
 	return client.BallotByIdentifier(context.Background(), &observertypes.QueryBallotByIdentifierRequest{
@@ -259,12 +271,12 @@ func (b *ZetaCoreBridge) GetKeyGen() (*observertypes.Keygen, error) {
 	var err error
 	client := observertypes.NewQueryClient(b.grpcConn)
 
-	for i := 0; i <= ExtendedRetryCount; i++ {
+	for i := 0; i <= common.ExtendedRetryCount; i++ {
 		resp, err := client.Keygen(context.Background(), &observertypes.QueryGetKeygenRequest{})
 		if err == nil {
 			return resp.Keygen, nil
 		}
-		time.Sleep(DefaultRetryInterval * time.Second)
+		time.Sleep(common.DefaultRetryInterval * time.Second)
 	}
 	return nil, fmt.Errorf("failed to get keygen | err %s", err.Error())
 

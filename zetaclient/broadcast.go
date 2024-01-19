@@ -15,6 +15,7 @@ import (
 	flag "github.com/spf13/pflag"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 	"github.com/zeta-chain/zetacore/cmd/zetacored/config"
+	"github.com/zeta-chain/zetacore/common"
 	"github.com/zeta-chain/zetacore/common/cosmos"
 	"github.com/zeta-chain/zetacore/zetaclient/hsm"
 )
@@ -34,13 +35,15 @@ func (b *ZetaCoreBridge) Broadcast(gaslimit uint64, authzWrappedMsg sdktypes.Msg
 	if err != nil {
 		return "", err
 	}
-	baseGasPrice, err := b.GetBaseGasPrice()
+	baseGasPrice, err := b.GetBaseGasPriceInt()
 	if err != nil {
 		return "", err
 	}
-	if baseGasPrice == 0 {
-		baseGasPrice = DefaultBaseGasPrice // shoudn't happen, but just in case
-	}
+
+	adjustGasPrice, err := common.GetAdjustTedGasPriceForTx(int64(gaslimit), baseGasPrice)
+	//if adjustGasPrice == 0 {
+	//	baseGasPrice = DefaultBaseGasPrice // shoudn't happen, but just in case
+	//}
 
 	if blockHeight > b.blockHeight {
 		b.blockHeight = blockHeight
