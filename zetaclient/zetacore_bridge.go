@@ -173,11 +173,11 @@ func (b *ZetaCoreBridge) WaitForCoreToCreateBlocks() {
 			break
 		}
 		retryCount++
-		b.logger.Debug().Msgf("Failed to get latest Block , Retry : %d/%d", retryCount, DefaultRetryCount)
-		if retryCount > ExtendedRetryCount {
-			panic(fmt.Sprintf("ZetaCore is not ready , Waited for %d seconds", DefaultRetryCount*DefaultRetryInterval))
+		b.logger.Debug().Msgf("Failed to get latest Block , Retry : %d/%d", retryCount, common.DefaultRetryCount)
+		if retryCount > common.ExtendedRetryCount {
+			panic(fmt.Sprintf("ZetaCore is not ready , Waited for %d seconds", common.DefaultRetryCount*common.DefaultRetryInterval))
 		}
-		time.Sleep(DefaultRetryInterval * time.Second)
+		time.Sleep(common.DefaultRetryInterval * time.Second)
 	}
 }
 

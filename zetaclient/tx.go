@@ -18,21 +18,6 @@ import (
 	"github.com/zeta-chain/zetacore/zetaclient/config"
 )
 
-const (
-	PostGasPriceGasLimit            = 1_500_000
-	AddTxHashToOutTxTrackerGasLimit = 200_000
-	PostNonceGasLimit               = 200_000
-	PostSendEVMGasLimit             = 4_000_000 // likely emit a lot of logs, so costly
-	PostSendNonEVMGasLimit          = 1_000_000
-	PostReceiveConfirmationGasLimit = 400_000
-	PostBlameDataGasLimit           = 200_000
-	DefaultGasLimit                 = 200_000
-	PostProveOutboundTxGasLimit     = 400_000
-	DefaultRetryCount               = 5
-	ExtendedRetryCount              = 15
-	DefaultRetryInterval            = 5
-)
-
 // GetInBoundVoteMessage returns a new MsgVoteOnObservedInboundTx
 func GetInBoundVoteMessage(
 	sender string,
@@ -91,16 +76,16 @@ func (b *ZetaCoreBridge) PostGasPrice(chain common.Chain, gasPrice uint64, suppl
 		return "", err
 	}
 
-	for i := 0; i < DefaultRetryCount; i++ {
-		zetaTxHash, err := b.Broadcast(PostGasPriceGasLimit, authzMsg, authzSigner)
+	for i := 0; i < common.DefaultRetryCount; i++ {
+		zetaTxHash, err := b.Broadcast(common.PostGasPriceGasLimit, authzMsg, authzSigner)
 		if err == nil {
 			return zetaTxHash, nil
 		}
 		b.logger.Debug().Err(err).Msgf("PostGasPrice broadcast fail | Retry count : %d", i+1)
-		time.Sleep(DefaultRetryInterval * time.Second)
+		time.Sleep(common.DefaultRetryInterval * time.Second)
 	}
 
-	return "", fmt.Errorf("post gasprice failed after %d retries", DefaultRetryInterval)
+	return "", fmt.Errorf("post gasprice failed after %d retries", common.DefaultRetryInterval)
 }
 
 func (b *ZetaCoreBridge) AddTxHashToOutTxTracker(
@@ -119,7 +104,7 @@ func (b *ZetaCoreBridge) AddTxHashToOutTxTracker(
 		return "", err
 	}
 
-	zetaTxHash, err := b.Broadcast(AddTxHashToOutTxTrackerGasLimit, authzMsg, authzSigner)
+	zetaTxHash, err := b.Broadcast(common.AddTxHashToOutTxTrackerGasLimit, authzMsg, authzSigner)
 	if err != nil {
 		return "", err
 	}
@@ -142,7 +127,7 @@ func (b *ZetaCoreBridge) PostSend(zetaGasLimit uint64, msg *types.MsgVoteOnObser
 		return "", ballotIndex, nil
 	}
 
-	for i := 0; i < DefaultRetryCount; i++ {
+	for i := 0; i < common.DefaultRetryCount; i++ {
 		zetaTxHash, err := b.Broadcast(zetaGasLimit, authzMsg, authzSigner)
 		if err == nil {
 			// monitor the result of the transaction
@@ -151,9 +136,9 @@ func (b *ZetaCoreBridge) PostSend(zetaGasLimit uint64, msg *types.MsgVoteOnObser
 			return zetaTxHash, ballotIndex, nil
 		}
 		b.logger.Debug().Err(err).Msgf("PostSend broadcast fail | Retry count : %d", i+1)
-		time.Sleep(DefaultRetryInterval * time.Second)
+		time.Sleep(common.DefaultRetryInterval * time.Second)
 	}
-	return "", ballotIndex, fmt.Errorf("post send failed after %d retries", DefaultRetryInterval)
+	return "", ballotIndex, fmt.Errorf("post send failed after %d retries", common.DefaultRetryInterval)
 }
 
 func (b *ZetaCoreBridge) PostReceiveConfirmation(
@@ -202,11 +187,11 @@ func (b *ZetaCoreBridge) PostReceiveConfirmation(
 
 	// FIXME: remove this gas limit stuff; in the special ante handler with no gas limit, add
 	// NewMsgReceiveConfirmation to it.
-	var gasLimit uint64 = PostReceiveConfirmationGasLimit
+	var gasLimit uint64 = common.PostReceiveConfirmationGasLimit
 	if status == common.ReceiveStatus_Failed {
-		gasLimit = PostSendEVMGasLimit
+		gasLimit = common.PostSendEVMGasLimit
 	}
-	for i := 0; i < DefaultRetryCount; i++ {
+	for i := 0; i < common.DefaultRetryCount; i++ {
 		zetaTxHash, err := b.Broadcast(gasLimit, authzMsg, authzSigner)
 		if err == nil {
 			// monitor the result of the transaction
@@ -215,9 +200,9 @@ func (b *ZetaCoreBridge) PostReceiveConfirmation(
 			return zetaTxHash, ballotIndex, nil
 		}
 		b.logger.Debug().Err(err).Msgf("PostReceive broadcast fail | Retry count : %d", i+1)
-		time.Sleep(DefaultRetryInterval * time.Second)
+		time.Sleep(common.DefaultRetryInterval * time.Second)
 	}
-	return "", ballotIndex, fmt.Errorf("post receive failed after %d retries", DefaultRetryCount)
+	return "", ballotIndex, fmt.Errorf("post receive failed after %d retries", common.DefaultRetryCount)
 }
 
 func (b *ZetaCoreBridge) SetTSS(tssPubkey string, keyGenZetaHeight int64, status common.ReceiveStatus) (string, error) {
@@ -230,13 +215,13 @@ func (b *ZetaCoreBridge) SetTSS(tssPubkey string, keyGenZetaHeight int64, status
 	}
 
 	zetaTxHash := ""
-	for i := 0; i <= DefaultRetryCount; i++ {
-		zetaTxHash, err = b.Broadcast(DefaultGasLimit, authzMsg, authzSigner)
+	for i := 0; i <= common.DefaultRetryCount; i++ {
+		zetaTxHash, err = b.Broadcast(common.DefaultGasLimit, authzMsg, authzSigner)
 		if err == nil {
 			return zetaTxHash, nil
 		}
 		b.logger.Debug().Err(err).Msgf("SetTSS broadcast fail | Retry count : %d", i+1)
-		time.Sleep(DefaultRetryInterval * time.Second)
+		time.Sleep(common.DefaultRetryInterval * time.Second)
 	}
 
 	return "", fmt.Errorf("set tss failed | err %s", err.Error())
@@ -274,17 +259,17 @@ func (b *ZetaCoreBridge) PostBlameData(blame *blame.Blame, chainID int64, index 
 		return "", err
 	}
 
-	var gasLimit uint64 = PostBlameDataGasLimit
+	var gasLimit uint64 = common.PostBlameDataGasLimit
 
-	for i := 0; i < DefaultRetryCount; i++ {
+	for i := 0; i < common.DefaultRetryCount; i++ {
 		zetaTxHash, err := b.Broadcast(gasLimit, authzMsg, authzSigner)
 		if err == nil {
 			return zetaTxHash, nil
 		}
 		b.logger.Error().Err(err).Msgf("PostBlame broadcast fail | Retry count : %d", i+1)
-		time.Sleep(DefaultRetryInterval * time.Second)
+		time.Sleep(common.DefaultRetryInterval * time.Second)
 	}
-	return "", fmt.Errorf("post blame data failed after %d retries", DefaultRetryCount)
+	return "", fmt.Errorf("post blame data failed after %d retries", common.DefaultRetryCount)
 }
 
 func (b *ZetaCoreBridge) PostAddBlockHeader(chainID int64, blockHash []byte, height int64, header common.HeaderData) (string, error) {
@@ -297,16 +282,16 @@ func (b *ZetaCoreBridge) PostAddBlockHeader(chainID int64, blockHash []byte, hei
 		return "", err
 	}
 
-	var gasLimit uint64 = DefaultGasLimit
-	for i := 0; i < DefaultRetryCount; i++ {
+	var gasLimit uint64 = common.DefaultGasLimit
+	for i := 0; i < common.DefaultRetryCount; i++ {
 		zetaTxHash, err := b.Broadcast(gasLimit, authzMsg, authzSigner)
 		if err == nil {
 			return zetaTxHash, nil
 		}
 		b.logger.Error().Err(err).Msgf("PostAddBlockHeader broadcast fail | Retry count : %d", i+1)
-		time.Sleep(DefaultRetryInterval * time.Second)
+		time.Sleep(common.DefaultRetryInterval * time.Second)
 	}
-	return "", fmt.Errorf("post add block header failed after %d retries", DefaultRetryCount)
+	return "", fmt.Errorf("post add block header failed after %d retries", common.DefaultRetryCount)
 }
 
 // MonitorTxResult monitors the result of a tx (used for inbound and outbound vote txs)

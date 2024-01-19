@@ -81,7 +81,6 @@ func (msg *MsgUpdateCrosschainFlags) GetRequiredGroup() Policy_Type {
 	}
 	if msg.BlockHeaderVerificationFlags != nil && (msg.BlockHeaderVerificationFlags.IsEthTypeChainEnabled || msg.BlockHeaderVerificationFlags.IsBtcTypeChainEnabled) {
 		return Policy_Type_group2
-
 	}
 	return Policy_Type_group1
 }

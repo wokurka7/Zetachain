@@ -3,7 +3,7 @@ set -x
 
 #zetacored tx observer add-observer 5 InBoundTx --from zeta --fees=40azeta --chain-id=localnet_101-1 --keyring-backend=test -y --broadcast-mode=block
 #zetacored tx observer add-observer 5 OutBoundTx --from zeta --fees=40azeta --chain-id=localnet_101-1 --keyring-backend=test -y --broadcast-mode=block
-zetacored tx observer add-observer 2374 InBoundTx --from zeta --fees=40azeta --chain-id=localnet_101-1 --keyring-backend=test -y --broadcast-mode=block
+zetacored tx observer add-observer 2374 InBoundTx --from zeta --chain-id=localnet_101-1 --keyring-backend=test -y --broadcast-mode=block --gas=auto --gas-adjustment=2 --gas-prices=0.1azeta
 zetacored tx observer add-observer 2374 OutBoundTx --from zeta --fees=40azeta --chain-id=localnet_101-1 --keyring-backend=test -y --broadcast-mode=block
 zetacored tx crosschain gas-price-voter 1 10000000000 100 100 --from=zeta --keyring-backend=test --yes --chain-id=localnet_101-1 --broadcast-mode=block --gas=auto --gas-adjustment=2 --gas-prices=0.1azeta
 zetacored tx crosschain nonce-voter Goerli 2374  --from=zeta --keyring-backend=test --yes --chain-id=localnet_101-1 --broadcast-mode=block --gas=auto --gas-adjustment=2 --gas-prices=0.1azeta --broadcast-mode=block
