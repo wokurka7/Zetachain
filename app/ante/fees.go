@@ -27,6 +27,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
+	"github.com/zeta-chain/zetacore/common"
 	crosschainTypes "github.com/zeta-chain/zetacore/x/crosschain/types"
 )
 
@@ -85,12 +86,14 @@ func (mpd MinGasPriceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate 
 	if !ok {
 		return ctx, errorsmod.Wrapf(errortypes.ErrInvalidType, "invalid transaction type %T, expected sdk.FeeTx", tx)
 	}
+	gasLimit := feeTx.GetGas()
 	msg := tx.GetMsgs()
 	// Only allow 1 msg per system tx as the system txs would be processed with a lower gas price
 	if len(msg) > 1 {
 		return ctx, errorsmod.Wrapf(ErrTooManyMessages, "only 1 message supported per system tx")
 	}
-	minGasPrice := mpd.feesKeeper.GetParams(ctx).MinGasPrice
+	currentMinGasPrince := mpd.feesKeeper.GetParams(ctx).MinGasPrice
+	minGasPrice := currentMinGasPrince
 	// Short-circuit if min gas price is 0 or if simulating
 	if minGasPrice.IsZero() || simulate {
 		return next(ctx, tx, simulate)
@@ -104,7 +107,7 @@ func (mpd MinGasPriceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate 
 	// Check for system tx and reduce gas price base on msg type
 	switch msg[0].(type) {
 	case *crosschainTypes.MsgGasPriceVoter:
-		minGasPrice = sdk.MustNewDecFromStr("0.01")
+		minGasPrice, err = common.GetAdjustTedGasPriceForTx(gasLimit, currentMinGasPrince)
 	case *crosschainTypes.MsgVoteOnObservedInboundTx:
 		minGasPrice = sdk.MustNewDecFromStr("0.0001")
 	default:

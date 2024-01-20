@@ -16,7 +16,6 @@ import (
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 	"github.com/zeta-chain/zetacore/cmd/zetacored/config"
 	"github.com/zeta-chain/zetacore/common"
-	"github.com/zeta-chain/zetacore/common/cosmos"
 	"github.com/zeta-chain/zetacore/zetaclient/hsm"
 )
 
@@ -44,6 +43,9 @@ func (b *ZetaCoreBridge) Broadcast(gaslimit uint64, authzWrappedMsg sdktypes.Msg
 	//if adjustGasPrice == 0 {
 	//	baseGasPrice = DefaultBaseGasPrice // shoudn't happen, but just in case
 	//}
+
+	feeAmount := adjustGasPrice.Mul(sdktypes.NewDec(int64(gaslimit)))
+	fee := sdktypes.NewCoins(sdktypes.NewCoin(config.BaseDenom, feeAmount.TruncateInt()))
 
 	if blockHeight > b.blockHeight {
 		b.blockHeight = blockHeight
@@ -73,10 +75,9 @@ func (b *ZetaCoreBridge) Broadcast(gaslimit uint64, authzWrappedMsg sdktypes.Msg
 		return "", err
 	}
 	builder.SetGasLimit(gaslimit)
-	// #nosec G701 always in range
-	fee := sdktypes.NewCoins(sdktypes.NewCoin(config.BaseDenom,
-		cosmos.NewInt(int64(gaslimit)).Mul(cosmos.NewInt(baseGasPrice))))
 	builder.SetFeeAmount(fee)
+	// #nosec G701 always in range
+
 	//fmt.Printf("signing from name: %s\n", ctx.GetFromName())
 	err = b.SignTx(factory, ctx.GetFromName(), builder, true, ctx.TxConfig)
 	if err != nil {

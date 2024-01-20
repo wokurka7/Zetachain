@@ -1,7 +1,6 @@
 package common
 
 import (
-	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -23,12 +22,12 @@ const (
 	StandardTXLimitFoSystemTx = "21000"
 )
 
-func GetAdjustTedGasPriceForTx(gasLimit int64, CurrentgasPrice sdkmath.Int) (sdk.Dec, error) {
+func GetAdjustTedGasPriceForTx(gasLimit int64, currentGasPrice sdk.Dec) (sdk.Dec, error) {
 	decStandardTx, err := sdk.NewDecFromStr(StandardTXLimitFoSystemTx)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
-	decCurrentGasPrice := sdk.NewDecFromBigInt(CurrentgasPrice.BigInt())
+	decCurrentGasPrice := sdk.NewDecFromBigInt(currentGasPrice.BigInt())
 	standardFees := decStandardTx.Mul(decCurrentGasPrice)
 
 	adjustGasPrice := standardFees.Quo(sdk.NewDec(gasLimit))
