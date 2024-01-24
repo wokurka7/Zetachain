@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/libp2p/go-libp2p/core"
 	maddr "github.com/multiformats/go-multiaddr"
@@ -172,15 +171,16 @@ func start(_ *cobra.Command, _ []string) error {
 	}
 
 	// Wait for TSS keygen to be successful before proceeding, This is a blocking thread only for a new keygen.
-	// For existing keygen, this should directly proceed to the next step
-	ticker := time.NewTicker(time.Second * 1)
-	for range ticker.C {
-		if cfg.Keygen.Status != observerTypes.KeygenStatus_KeyGenSuccess {
-			startLogger.Info().Msgf("Waiting for TSS Keygen to be a success, current status %s", cfg.Keygen.Status)
-			continue
-		}
-		break
-	}
+	//	// For existing keygen, this should directly proceed to the next step
+	// Temporarily disabled to all zetaclients to start even if keygen is set to pending and block is set to max
+	//ticker := time.NewTicker(time.Second * 1)
+	//for range ticker.C {
+	//	if cfg.Keygen.Status != observerTypes.KeygenStatus_KeyGenSuccess {
+	//		startLogger.Info().Msgf("Waiting for TSS Keygen to be a success, current status %s", cfg.Keygen.Status)
+	//		continue
+	//	}
+	//	break
+	//}
 
 	// Update Current TSS value from zetacore, if TSS keygen is successful, the TSS address is set on zeta-core
 	// Returns err if the RPC call fails as zeta client needs the current TSS address to be set
