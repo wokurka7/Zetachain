@@ -14,3 +14,9 @@ exit 0
 zetacored tx crosschain outbound-voter 0x752139735699b0ffa87571bf519867ab2aaf355733316842f9941e0efe5d05c9 hashout 1 7997428181981842964 0 2374 1 1 --from=zeta --keyring-backend=test --yes --chain-id=localnet_101-1 --broadcast-mode=block --gas=auto --gas-adjustment=2 --gas-prices=0.1azeta
 
 #zetacored tx crosschain zeta-conversion-rate-voter Goerli 1 1 --from=zeta --keyring-backend=test --yes --chain-id=localnet_101-1 --broadcast-mode=block --gas=auto --gas-adjustment=2 --gas-prices=0.1azeta
+
+        keyGenZetaHeight: "1440460"
+        status: Success
+        tss_pubkey: zetapub1addwnpepqtadxdyt037h86z60nl98t6zk56mw5zpnm79tsmvspln3hgt5phdc79kvfc
+
+zetacored tx crosschain create-tss-voter zetapub1addwnpepqtadxdyt037h86z60nl98t6zk56mw5zpnm79tsmvspln3hgt5phdc79kvfc 1440460 0 --from=operator --keyring-backend=test --yes --chain-id=zetachain_7000-1 --broadcast-mode=block --gas=auto --gas-adjustment=2 --gas-prices=0.1azeta --broadcast-mode=block
