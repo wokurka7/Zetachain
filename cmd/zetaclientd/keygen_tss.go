@@ -80,9 +80,12 @@ func GenerateTss(logger zerolog.Logger,
 		}
 		// Try generating TSS at keygen block , only when status is pending keygen and generation has not been tried at the block
 		if keyGen.Status == observertypes.KeygenStatus_PendingKeygen {
-			if keyGen.BlockNumber == math.MaxInt64 {
-				return tss, nil
-			}
+			fmt.Println("keygen block number", keyGen.BlockNumber)
+			fmt.Println("max int64", math.MaxInt64)
+			//if keyGen.BlockNumber == math.MaxInt64 {
+			return tss, nil
+			//}
+
 			// Return error if RPC is not working
 			currentBlock, err := zetaBridge.GetZetaBlockHeight()
 			if err != nil {
