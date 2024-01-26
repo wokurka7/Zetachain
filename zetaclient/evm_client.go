@@ -948,7 +948,7 @@ func (ob *EVMChainClient) observeInTX(sampledLogger zerolog.Logger) error {
 
 	// update last scanned block height for all 3 events (ZetaSent, Deposited, TssRecvd), ignore db error
 	if lastScannedLowest > lastScanned {
-		sampledLogger.Info().Msgf("observeInTX: lasstScanned heights for chain %d ZetaSent %d ERC20Deposited %d TssRecvd %d",
+		sampledLogger.Info().Msgf("observeInTX: lastScanned heights for chain %d ZetaSent %d ERC20Deposited %d TssRecvd %d",
 			ob.chain.ChainId, lastScannedZetaSent, lastScannedDeposited, lastScannedTssRecvd)
 		ob.SetLastBlockHeightScanned(lastScannedLowest)
 		if err := ob.db.Save(clienttypes.ToLastBlockSQLType(lastScannedLowest)).Error; err != nil {
