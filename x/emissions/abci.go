@@ -14,7 +14,7 @@ import (
 func BeginBlocker(ctx sdk.Context, keeper keeper.Keeper) {
 
 	reservesFactor, bondFactor, durationFactor := keeper.GetBlockRewardComponents(ctx)
-	blockRewards := reservesFactor.Mul(bondFactor).Mul(durationFactor)
+	blockRewards := reservesFactor.Mul(bondFactor).Mul(durationFactor) // in azeta
 	if blockRewards.IsZero() {
 		return
 	}

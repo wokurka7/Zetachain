@@ -44,8 +44,7 @@ func (k Keeper) GetDurationFactor(ctx sdk.Context) sdk.Dec {
 	fractionNumerator := monthFactor.Mul(logValueDec)
 	// (month * log(1 + 0.02 / 12) ) + 1
 	fractionDenominator := fractionNumerator.Add(sdk.OneDec())
-
-	// (month * log(1 + 0.02 / 12)) / (month * log(1 + 0.02 / 12) ) + 1
+	// ((month * log(1 + 0.02 / 12)) / (month * log(1 + 0.02 / 12) ) + 1) / NumberOfBlocksInAMonth
 	if fractionDenominator.IsZero() {
 		return sdk.OneDec()
 	}

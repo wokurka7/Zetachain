@@ -6,7 +6,7 @@
     "ZetaClientGranteePubKey": "zetapub1addwnpepqtlu7fykuh875xjckz4mn4x0mzc25rrqk5qne7mrwxqmatgllv3nx6lrkdp"
   },
   {
-    "IsObserver": "y",
+    "IsObserver": "n",
     "ObserverAddress": "zeta1f203dypqg5jh9hqfx0gfkmmnkdfuat3jr45ep2",
     "ZetaClientGranteeAddress": "zeta1unzpyll3tmutf0r8sqpxpnj46vtdr59mw8qepx",
     "ZetaClientGranteePubKey": "zetapub1addwnpepqwy5pmg39regpq0gkggxehmfm8hwmxxw94sch7qzh4smava0szs07kk5045"
