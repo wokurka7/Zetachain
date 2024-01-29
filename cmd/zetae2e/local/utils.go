@@ -77,8 +77,8 @@ func initTestRunner(
 	return testRunner, nil
 }
 
-// waitKeygenHeight waits for keygen height
-func waitKeygenHeight(
+// WaitKeygenHeight waits for keygen height
+func WaitKeygenHeight(
 	ctx context.Context,
 	cctxClient crosschaintypes.QueryClient,
 	logger *runner.Logger,
