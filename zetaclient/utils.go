@@ -14,6 +14,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/wire"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
@@ -73,15 +74,24 @@ func FeeRateToSatPerByte(rate float64) *big.Int {
 	return new(big.Int).Div(satPerKB, big.NewInt(bytesPerKB))
 }
 
+// WiredTxSize calculates the wired tx size in bytes
+func WiredTxSize(numInputs uint64, numOutputs uint64) uint64 {
+	// Version 4 bytes + LockTime 4 bytes + Serialized varint size for the
+	// number of transaction inputs and outputs.
+	// #nosec G701 always positive
+	return uint64(8 + wire.VarIntSerializeSize(numInputs) + wire.VarIntSerializeSize(numOutputs))
+}
+
 // EstimateSegWitTxSize estimates SegWit tx size
 func EstimateSegWitTxSize(numInputs uint64, numOutputs uint64) uint64 {
 	if numInputs == 0 {
 		return 0
 	}
+	bytesWiredTx := WiredTxSize(numInputs, numOutputs)
 	bytesInput := numInputs * bytesPerInput
 	bytesOutput := numOutputs * bytesPerOutput
 	bytesWitness := bytes1stWitness + (numInputs-1)*bytesPerWitness
-	return bytesEmptyTx + bytesInput + bytesOutput + bytesWitness
+	return bytesWiredTx + bytesInput + bytesOutput + bytesWitness
 }
 
 // SegWitTxSizeDepositor returns SegWit tx size (149B) incurred by the depositor
@@ -89,11 +99,12 @@ func SegWitTxSizeDepositor() uint64 {
 	return bytesPerInput + bytesPerWitness
 }
 
-// SegWitTxSizeWithdrawer returns SegWit tx size (254B) incurred by the withdrawer
+// SegWitTxSizeWithdrawer returns SegWit tx size (254B) incurred by the withdrawer (1 input, 3 outputs)
 func SegWitTxSizeWithdrawer() uint64 {
+	bytesWiredTx := WiredTxSize(1, 3)
 	bytesInput := uint64(1) * bytesPerInput   // nonce mark
 	bytesOutput := uint64(3) * bytesPerOutput // 3 outputs: new nonce mark, payment, change
-	return bytesEmptyTx + bytesInput + bytesOutput + bytes1stWitness
+	return bytesWiredTx + bytesInput + bytesOutput + bytes1stWitness
 }
 
 // DepositorFee calculates the depositor fee in BTC for a given sat/byte fee rate
