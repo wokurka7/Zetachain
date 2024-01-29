@@ -3,7 +3,6 @@ package local
 import (
 	"fmt"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/zeta-chain/zetacore/contrib/localnet/orchestrator/smoketest/cmd/smoketest/local"
 	"github.com/zeta-chain/zetacore/contrib/localnet/orchestrator/smoketest/utils"
 	crosschaintypes "github.com/zeta-chain/zetacore/x/crosschain/types"
 	"math/big"
@@ -127,7 +126,7 @@ func WithdrawBTCZRC20(sm *runner.SmokeTestRunner) {
 	sm.ZevmAuth.Nonce = zevmNonce
 
 	sm.Logger.Print("nonce %d: starting withdraw", zevmNonce)
-	tx, err := sm.BTCZRC20.Withdraw(sm.ZevmAuth, local.DeployerAddress.Bytes(), big.NewInt(100))
+	tx, err := sm.BTCZRC20.Withdraw(sm.ZevmAuth, []byte(sm.BTCDeployerAddress.EncodeAddress()), big.NewInt(100))
 	if err != nil {
 		panic(err)
 	}
