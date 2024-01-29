@@ -241,6 +241,7 @@ func EchoNetworkMetrics(sm *runner.SmokeTestRunner) {
 				ChainId: chainID.Int64(),
 			})
 			if err != nil {
+				fmt.Printf("error getting pending cctx: %s", err.Error())
 				continue
 			}
 			sends := cctxResp.CrossChainTx
@@ -250,6 +251,7 @@ func EchoNetworkMetrics(sm *runner.SmokeTestRunner) {
 			if len(sends) > 0 {
 				fmt.Printf("pending nonces %d to %d\n", sends[0].GetCurrentOutTxParam().OutboundTxTssNonce, sends[len(sends)-1].GetCurrentOutTxParam().OutboundTxTssNonce)
 			} else {
+				fmt.Printf("no pending cctx\n")
 				continue
 			}
 			//
@@ -311,12 +313,12 @@ func WithdrawBTCZRC20(sm *runner.SmokeTestRunner) {
 func MonitorCCTXFromTxHash(sm *runner.SmokeTestRunner, tx *ethtypes.Transaction, nonce int64) {
 	receipt := utils.MustWaitForTxReceipt(sm.Ctx, sm.ZevmClient, tx, sm.Logger, sm.ReceiptTimeout)
 	if receipt.Status == 0 {
-		sm.Logger.Info("nonce %d: withdraw evm tx failed", nonce)
+		sm.Logger.Print("nonce %d: withdraw evm tx failed", nonce)
 		return
 	}
 	cctx := utils.WaitCctxMinedByInTxHash(sm.Ctx, tx.Hash().Hex(), sm.CctxClient, sm.Logger, sm.ReceiptTimeout)
 	if cctx.CctxStatus.Status != crosschaintypes.CctxStatus_OutboundMined {
-		sm.Logger.Info(
+		sm.Logger.Print(
 			"nonce %d: withdraw cctx failed with status %s, message %s",
 			nonce,
 			cctx.CctxStatus.Status,
@@ -324,7 +326,7 @@ func MonitorCCTXFromTxHash(sm *runner.SmokeTestRunner, tx *ethtypes.Transaction,
 		)
 		return
 	}
-	sm.Logger.Info("nonce %d: withdraw cctx success", nonce)
+	sm.Logger.Print("nonce %d: withdraw cctx success", nonce)
 }
 
 // Get ETH based chain ID
