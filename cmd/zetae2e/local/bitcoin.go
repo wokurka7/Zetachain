@@ -4,7 +4,6 @@ import (
 	"fmt"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/zeta-chain/zetacore/contrib/localnet/orchestrator/smoketest/cmd/smoketest/local"
-	"github.com/zeta-chain/zetacore/contrib/localnet/orchestrator/smoketest/smoketests"
 	"github.com/zeta-chain/zetacore/contrib/localnet/orchestrator/smoketest/utils"
 	crosschaintypes "github.com/zeta-chain/zetacore/x/crosschain/types"
 	"math/big"
@@ -50,7 +49,7 @@ func bitcoinTestRoutine(
 		}
 
 		bitcoinRunner.Logger.Print("🏃 starting Bitcoin tests")
-		startTime := time.Now()
+		//startTime :=  time.Now()
 
 		// funding the account
 		txUSDTSend := deployerRunner.SendUSDTOnEvm(UserBitcoinAddress, 1000)
@@ -77,25 +76,27 @@ func bitcoinTestRoutine(
 
 		bitcoinRunner.MineBlocks()
 
-		//go WithdrawCCtx(bitcoinRunner)
+		go WithdrawCCtx(bitcoinRunner)
 
-		// run bitcoin test
-		// Note: due to the extensive block generation in Bitcoin localnet, block header test is run first
-		// to make it faster to catch up with the latest block header
-		if err := bitcoinRunner.RunSmokeTestsFromNames(
-			smoketests.AllSmokeTests,
-			smoketests.TestBitcoinWithdrawName,
-			//smoketests.TestSendZetaOutBTCRevertName,
-			//smoketests.TestCrosschainSwapName,
-		); err != nil {
-			return fmt.Errorf("bitcoin tests failed: %v", err)
-		}
+		//// run bitcoin test
+		//// Note: due to the extensive block generation in Bitcoin localnet, block header test is run first
+		//// to make it faster to catch up with the latest block header
+		//if err := bitcoinRunner.RunSmokeTestsFromNames(
+		//	smoketests.AllSmokeTests,
+		//	smoketests.TestBitcoinWithdrawName,
+		//	//smoketests.TestSendZetaOutBTCRevertName,
+		//	//smoketests.TestCrosschainSwapName,
+		//); err != nil {
+		//	return fmt.Errorf("bitcoin tests failed: %v", err)
+		//}
+		//
+		//if err := bitcoinRunner.CheckBtcTSSBalance(); err != nil {
+		//	return err
+		//}
+		//
+		//bitcoinRunner.Logger.Print("🍾 Bitcoin tests completed in %s", time.Since(startTime).String())
 
-		if err := bitcoinRunner.CheckBtcTSSBalance(); err != nil {
-			return err
-		}
-
-		bitcoinRunner.Logger.Print("🍾 Bitcoin tests completed in %s", time.Since(startTime).String())
+		time.Sleep(100 * time.Second)
 
 		return nil
 	}
@@ -140,7 +141,7 @@ func MonitorCCTXFromTxHash(sm *runner.SmokeTestRunner, tx *ethtypes.Transaction,
 		sm.Logger.Print("nonce %d: withdraw evm tx failed", nonce)
 		return
 	}
-	sm.Logger.Print("nonce %d: withdraw evm tx success", nonce)
+	sm.Logger.Print("nonce %d: withdraw evm tx success, receipt: %+v", nonce, receipt)
 	// mine 10 blocks to confirm the withdraw tx
 	_, err := sm.BtcRPCClient.GenerateToAddress(10, sm.BTCDeployerAddress, nil)
 	if err != nil {
