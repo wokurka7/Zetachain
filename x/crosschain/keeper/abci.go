@@ -108,7 +108,7 @@ func (k Keeper) CheckAndUpdateCctxGasPrice(
 	if err := k.fungibleKeeper.WithdrawFromGasStabilityPool(ctx, chainID, additionalFees.BigInt()); err != nil {
 		return math.ZeroUint(), math.ZeroUint(), cosmoserrors.Wrap(
 			types.ErrNotEnoughFunds,
-			fmt.Sprintf("cannot withdraw %s from gas stability pool", additionalFees.String()),
+			fmt.Sprintf("cannot withdraw %s from gas stability pool for chain %d", additionalFees.String(), chainID),
 		)
 	}
 
