@@ -32,7 +32,7 @@ import (
 // and returns them as a JSON object.
 func (b *Backend) TraceTransaction(hash common.Hash, config *evmtypes.TraceConfig) (interface{}, error) {
 	// Get transaction by hash
-	transaction, _, err := b.GetTxByEthHash(hash)
+	transaction, additional, err := b.GetTxByEthHash(hash)
 	if err != nil {
 		b.logger.Debug("tx not found", "hash", hash)
 		return nil, err
@@ -56,7 +56,7 @@ func (b *Backend) TraceTransaction(hash common.Hash, config *evmtypes.TraceConfi
 		return nil, fmt.Errorf("transaction not included in block %v", blk.Block.Height)
 	}
 
-	var predecessors []*evmtypes.MsgEthereumTx
+	predecessors := []*evmtypes.MsgEthereumTx{}
 	for _, txBz := range blk.Block.Txs[:transaction.TxIndex] {
 		tx, err := b.clientCtx.TxConfig.TxDecoder()(txBz)
 		if err != nil {
@@ -91,8 +91,15 @@ func (b *Backend) TraceTransaction(hash common.Hash, config *evmtypes.TraceConfi
 
 	ethMessage, ok := tx.GetMsgs()[transaction.MsgIndex].(*evmtypes.MsgEthereumTx)
 	if !ok {
-		b.logger.Debug("invalid transaction type", "type", fmt.Sprintf("%T", tx))
-		return nil, fmt.Errorf("invalid transaction type %T", tx)
+		if additional == nil {
+			b.logger.Debug("invalid transaction type", "type", fmt.Sprintf("%T", tx))
+			return nil, fmt.Errorf("invalid transaction type %T", tx)
+		}
+
+		ethMessage = &evmtypes.MsgEthereumTx{
+			Hash: hash.Hex(),
+			From: additional.Sender.Hex(),
+		}
 	}
 
 	traceTxRequest := evmtypes.QueryTraceTxRequest{
