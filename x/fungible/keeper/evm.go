@@ -672,6 +672,20 @@ func (k Keeper) CallEVMWithData(
 			ethTxHash = common.BytesToHash(hash) // NOTE(pwu): use cosmos tx hash as eth tx hash if available
 			attrs = append(attrs, sdk.NewAttribute(evmtypes.AttributeKeyTxHash, hash.String()))
 		}
+
+		txBytes, err := ethtypes.NewTx(&ethtypes.DynamicFeeTx{
+			ChainID:   k.evmKeeper.ChainID(),
+			Nonce:     nonce,
+			GasTipCap: msg.GasTipCap(),
+			GasFeeCap: msg.GasFeeCap(),
+			Gas:       msg.Gas(),
+			To:        msg.To(),
+			Value:     msg.Value(),
+			Data:      msg.Data(),
+		}).MarshalBinary()
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert tx msg, err=%w", err)
+		}
 		attrs = append(attrs, []sdk.Attribute{
 			sdk.NewAttribute(sdk.AttributeKeyAmount, value.String()),
 			// add event for ethereum transaction hash format; NOTE(pwu): this is a fake txhash
@@ -701,6 +715,7 @@ func (k Keeper) CallEVMWithData(
 		}
 
 		if !noEthereumTxEvent {
+			attrs = append(attrs, sdk.NewAttribute("TxBytes", hexutil.Encode(txBytes)))
 			ctx.EventManager().EmitEvents(sdk.Events{
 				sdk.NewEvent(
 					evmtypes.EventTypeEthereumTx,

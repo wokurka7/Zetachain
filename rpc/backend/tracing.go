@@ -22,6 +22,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
 	"github.com/pkg/errors"
 	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -49,6 +50,37 @@ func (b *Backend) TraceTransaction(hash common.Hash, config *evmtypes.TraceConfi
 		return nil, err
 	}
 
+	blockResult, err := b.TendermintBlockResultByNumber(&blk.Block.Height)
+	if err != nil {
+		return nil, fmt.Errorf("block result not found for height %d", blk.Block.Height)
+	}
+
+	// pull out txBytes from event and convert to MsgEthereumTx
+	ethTx88 := evmtypes.MsgEthereumTx{}
+	txRes := blockResult.TxsResults[transaction.TxIndex]
+	for _, ev := range txRes.Events {
+		for _, attr := range ev.Attributes {
+			if string(attr.Key) == "TxBytes" {
+				hexBytes, err := hexutil.Decode(string(attr.Value))
+				if err != nil {
+					return nil, err
+				}
+				t := ethtypes.Transaction{}
+				if err := t.UnmarshalBinary(hexBytes); err != nil {
+					return nil, err
+				}
+
+				if err := ethTx88.FromEthereumTx(&t); err != nil {
+					return nil, err
+				}
+			}
+
+			if string(attr.Key) == "sender" {
+				ethTx88.From = string(attr.Value)
+			}
+		}
+	}
+	ethTx88.Hash = hash.Hex()
 	// check tx index is not out of bound
 	// #nosec G701 txs number in block is always less than MaxUint32
 	if uint32(len(blk.Block.Txs)) < transaction.TxIndex {
@@ -112,6 +144,18 @@ func (b *Backend) TraceTransaction(hash common.Hash, config *evmtypes.TraceConfi
 		ChainId:         b.chainID.Int64(),
 	}
 
+	if additional != nil {
+		traceTxRequest = evmtypes.QueryTraceTxRequest{
+			Msg:             &ethTx88,
+			Predecessors:    []*evmtypes.MsgEthereumTx{},
+			BlockNumber:     blk.Block.Height,
+			BlockTime:       blk.Block.Time,
+			BlockHash:       common.Bytes2Hex(blk.BlockID.Hash),
+			ProposerAddress: sdk.ConsAddress(blk.Block.ProposerAddress),
+			ChainId:         b.chainID.Int64(),
+		}
+	}
+
 	if config != nil {
 		traceTxRequest.TraceConfig = config
 	}
@@ -122,6 +166,9 @@ func (b *Backend) TraceTransaction(hash common.Hash, config *evmtypes.TraceConfi
 		// 0 is a special value in `ContextWithHeight`
 		contextHeight = 1
 	}
+	// returns {"jsonrpc":"2.0","id":1,"error":{"code":-32000,"message":"rpc error: code = Internal desc = invalid transaction v, r, s values"}}
+	// because there is no signature
+	// what is needed is to fork ethermint and tweak this grpc query part a bit (for example check if tx is unsigned and use msg.From directly in tracing, do not validate signatures)
 	traceResult, err := b.queryClient.TraceTx(rpctypes.ContextWithHeight(contextHeight), &traceTxRequest)
 	if err != nil {
 		return nil, err
