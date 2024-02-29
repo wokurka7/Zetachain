@@ -8,12 +8,16 @@ import (
 	crosschaintypes "github.com/zeta-chain/zetacore/x/crosschain/types"
 )
 
-const releaseVersion = "v13"
+const releaseVersion = "v14"
 
 func SetupHandlers(app *App) {
 	app.UpgradeKeeper.SetUpgradeHandler(releaseVersion, func(ctx sdk.Context, plan types.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		app.Logger().Info("Running upgrade handler for " + releaseVersion)
 		// Updated version map to the latest consensus versions from each module
+		for _, v := range vm {
+			app.Logger().Info("Current version map: ", v)
+		}
+
 		for m, mb := range app.mm.Modules {
 			vm[m] = mb.ConsensusVersion()
 		}
