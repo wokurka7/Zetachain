@@ -17,7 +17,7 @@ func SetupHandlers(app *App) {
 		for m, mb := range app.mm.Modules {
 			vm[m] = mb.ConsensusVersion()
 		}
-		VersionMigrator{v: vm}.TriggerMigration(crosschaintypes.ModuleName)
+		vm[crosschaintypes.ModuleName] = 13
 
 		return app.mm.RunMigrations(ctx, app.configurator, vm)
 	})
