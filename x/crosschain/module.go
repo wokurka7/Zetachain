@@ -9,6 +9,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/zeta-chain/zetacore/common"
 	"github.com/zeta-chain/zetacore/x/crosschain/keeper"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -154,6 +155,9 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	if err := cfg.RegisterMigration(types.ModuleName, 4, m.Migrate4to5); err != nil {
 		panic(err)
 	}
+	_ = cfg.RegisterMigration(types.ModuleName, 14, func(s sdk.Context) error {
+		return nil
+	})
 }
 
 // RegisterInvariants registers the crosschain module's invariants.
@@ -181,7 +185,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 }
 
 // ConsensusVersion implements AppModule/ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return 4 }
+func (AppModule) ConsensusVersion() uint64 { return common.AppVersion }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the crosschain module.
 func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {

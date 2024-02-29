@@ -1,14 +1,20 @@
 package app
 
 import (
+	"fmt"
+
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	"github.com/zeta-chain/zetacore/common"
 	crosschaintypes "github.com/zeta-chain/zetacore/x/crosschain/types"
+	emissionstypes "github.com/zeta-chain/zetacore/x/emissions/types"
+	fungibletypes "github.com/zeta-chain/zetacore/x/fungible/types"
+	observerTypes "github.com/zeta-chain/zetacore/x/observer/types"
 )
 
-const releaseVersion = "v13"
+var releaseVersion = fmt.Sprintf("v%d", common.AppVersion)
 
 func SetupHandlers(app *App) {
 	app.UpgradeKeeper.SetUpgradeHandler(releaseVersion, func(ctx sdk.Context, plan types.Plan, vm module.VersionMap) (module.VersionMap, error) {
@@ -17,7 +23,10 @@ func SetupHandlers(app *App) {
 		for m, mb := range app.mm.Modules {
 			vm[m] = mb.ConsensusVersion()
 		}
-		VersionMigrator{v: vm}.TriggerMigration(crosschaintypes.ModuleName)
+		zetaModules := []string{crosschaintypes.ModuleName, observerTypes.ModuleName, fungibletypes.ModuleName, emissionstypes.ModuleName}
+		for _, zetaModule := range zetaModules {
+			vm[zetaModule] = common.AppVersion - 1
+		}
 
 		return app.mm.RunMigrations(ctx, app.configurator, vm)
 	})
