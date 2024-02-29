@@ -26,6 +26,7 @@ type crosschainKeeper interface {
 // MigrateStore migrates the x/crosschain module state from the consensus version 4 to 5
 // It resets the aborted zeta amount to use the inbound tx amount instead in situations where the outbound cctx is never created.
 func MigrateStore(ctx sdk.Context, crosschainKeeper crosschainKeeper, observerKeeper types.ObserverKeeper) error {
+	fmt.Println("Running Correct migration for v5")
 	err := SetZetaAccounting(ctx, crosschainKeeper, observerKeeper)
 	if err != nil {
 		return err
