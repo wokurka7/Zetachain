@@ -18,10 +18,14 @@ func SetupHandlers(app *App) {
 		// Updated version map to the latest consensus versions from each module
 		for _, v := range vm {
 			fmt.Println("Current version map: ", v)
+			app.Logger().Info("Current version map: ", v)
 		}
+		fmt.Println("HERE-------")
+		app.Logger().Info("HERE-------")
 		vms := app.UpgradeKeeper.GetModuleVersions(ctx)
 		for m, v := range vms {
 			fmt.Println("Module: ", m, " Version: ", v)
+			app.Logger().Info("Module: ", m, " Version: ", v)
 		}
 
 		for m, mb := range app.mm.Modules {
