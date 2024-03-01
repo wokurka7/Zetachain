@@ -1,8 +1,6 @@
 package app
 
 import (
-	"fmt"
-
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -17,14 +15,10 @@ func SetupHandlers(app *App) {
 		app.Logger().Info("Running upgrade handler for " + releaseVersion)
 		// Updated version map to the latest consensus versions from each module
 		for _, v := range vm {
-			fmt.Println("Current version map: ", v)
 			app.Logger().Info("Current version map: ", v)
 		}
-		fmt.Println("HERE-------")
-		app.Logger().Info("HERE-------")
 		vms := app.UpgradeKeeper.GetModuleVersions(ctx)
 		for m, v := range vms {
-			fmt.Println("Module: ", m, " Version: ", v)
 			app.Logger().Info("Module: ", m, " Version: ", v)
 		}
 
