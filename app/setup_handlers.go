@@ -19,6 +19,10 @@ func SetupHandlers(app *App) {
 		for _, v := range vm {
 			fmt.Println("Current version map: ", v)
 		}
+		vms := app.UpgradeKeeper.GetModuleVersions(ctx)
+		for m, v := range vms {
+			fmt.Println("Module: ", m, " Version: ", v)
+		}
 
 		for m, mb := range app.mm.Modules {
 			vm[m] = mb.ConsensusVersion()
