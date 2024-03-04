@@ -123,6 +123,7 @@ function change_config_values {
     export STATE_SYNC_SERVER="${STATE_SYNC_SERVER}"
     export TRUST_HEIGHT=$(curl -s ${STATE_SYNC_SERVER}/block | jq -r '.result.block.header.height')
     export HEIGHT=$((TRUST_HEIGHT-${TRUST_HEIGHT_DIFFERENCE_STATE_SYNC}))
+    sleep 6
     export TRUST_HASH=$(curl -s "${STATE_SYNC_SERVER}/block?height=${HEIGHT}" | jq -r '.result.block_id.hash')
     export RPC_STATE_SYNC_SERVERS="${RPC_STATE_SYNC_SERVERS}"
     export EXTERNAL_IP=$(curl -4 icanhazip.com)
