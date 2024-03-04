@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"strconv"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,14 +25,9 @@ func NewParams() Params {
 		defaultSlashAmount = intSlashAmount
 	}
 	return Params{
-		MaxBondFactor:               "1.25",
-		MinBondFactor:               "0.75",
-		AvgBlockTime:                "6.00",
-		TargetBondRatio:             "00.67",
 		ValidatorEmissionPercentage: "00.50",
 		ObserverEmissionPercentage:  "00.25",
 		TssSignerEmissionPercentage: "00.25",
-		DurationFactorConstant:      "0.001877876953694702",
 		ObserverSlashAmount:         defaultSlashAmount,
 	}
 }
@@ -46,14 +40,9 @@ func DefaultParams() Params {
 // ParamSetPairs get the params.ParamSet
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
-		paramtypes.NewParamSetPair(KeyPrefix(ParamMaxBondFactor), &p.MaxBondFactor, validateMaxBondFactor),
-		paramtypes.NewParamSetPair(KeyPrefix(ParamMinBondFactor), &p.MinBondFactor, validateMinBondFactor),
-		paramtypes.NewParamSetPair(KeyPrefix(ParamAvgBlockTime), &p.AvgBlockTime, validateAvgBlockTime),
-		paramtypes.NewParamSetPair(KeyPrefix(ParamTargetBondRatio), &p.TargetBondRatio, validateTargetBondRatio),
 		paramtypes.NewParamSetPair(KeyPrefix(ParamValidatorEmissionPercentage), &p.ValidatorEmissionPercentage, validateValidatorEmissionPercentage),
 		paramtypes.NewParamSetPair(KeyPrefix(ParamObserverEmissionPercentage), &p.ObserverEmissionPercentage, validateObserverEmissionPercentage),
 		paramtypes.NewParamSetPair(KeyPrefix(ParamTssSignerEmissionPercentage), &p.TssSignerEmissionPercentage, validateTssEmissonPercentage),
-		paramtypes.NewParamSetPair(KeyPrefix(ParamDurationFactorConstant), &p.DurationFactorConstant, validateDurationFactorConstant),
 		paramtypes.NewParamSetPair(KeyPrefix(ParamObserverSlashAmount), &p.ObserverSlashAmount, validateObserverSlashAmount),
 	}
 }
@@ -79,67 +68,6 @@ func validateObserverSlashAmount(i interface{}) error {
 	}
 	if v.LT(sdk.ZeroInt()) {
 		return fmt.Errorf("slash amount cannot be less than 0")
-	}
-	return nil
-}
-func validateDurationFactorConstant(i interface{}) error {
-	_, ok := i.(string)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
-}
-
-func validateMaxBondFactor(i interface{}) error {
-	v, ok := i.(string)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	decMaxBond := sdk.MustNewDecFromStr(v)
-	if decMaxBond.GT(sdk.MustNewDecFromStr("1.25")) {
-		return fmt.Errorf("max bond factor cannot be higher that 0.25")
-	}
-	return nil
-}
-
-func validateMinBondFactor(i interface{}) error {
-	v, ok := i.(string)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	decMaxBond := sdk.MustNewDecFromStr(v)
-	if decMaxBond.LT(sdk.MustNewDecFromStr("0.75")) {
-		return fmt.Errorf("min bond factor cannot be lower that 0.75")
-	}
-	return nil
-}
-
-func validateAvgBlockTime(i interface{}) error {
-	v, ok := i.(string)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	blocktime, err := strconv.ParseFloat(v, 64)
-	if err != nil {
-		return fmt.Errorf("invalid block time: %T", i)
-	}
-	if blocktime <= 0 {
-		return fmt.Errorf("block time cannot be less than or equal to 0")
-	}
-	return nil
-}
-
-func validateTargetBondRatio(i interface{}) error {
-	v, ok := i.(string)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	decMaxBond := sdk.MustNewDecFromStr(v)
-	if decMaxBond.GT(sdk.OneDec()) {
-		return fmt.Errorf("target bond ratio cannot be more than 100 percent")
-	}
-	if decMaxBond.LT(sdk.ZeroDec()) {
-		return fmt.Errorf("target bond ratio cannot be less than 0 percent")
 	}
 	return nil
 }

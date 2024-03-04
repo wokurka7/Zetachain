@@ -25,7 +25,6 @@ func GetQueryCmd(_ string) *cobra.Command {
 
 	cmd.AddCommand(CmdQueryParams(),
 		CmdListPoolAddresses(),
-		CmdGetEmmisonsFactors(),
 		CmdShowAvailableEmissions())
 	// this line is used by starport scaffolding # 1
 	return cmd

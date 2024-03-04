@@ -18,12 +18,6 @@ service Query {
   rpc ListPoolAddresses(QueryListPoolAddressesRequest) returns (QueryListPoolAddressesResponse) {
     option (google.api.http).get = "/zeta-chain/emissions/list_addresses";
   }
-
-  // Queries a list of GetEmmisonsFactors items.
-  rpc GetEmissionsFactors(QueryGetEmissionsFactorsRequest) returns (QueryGetEmissionsFactorsResponse) {
-    option (google.api.http).get = "/zeta-chain/emissions/get_emissions_factors";
-  }
-
   // Queries a list of ShowAvailableEmissions items.
   rpc ShowAvailableEmissions(QueryShowAvailableEmissionsRequest) returns (QueryShowAvailableEmissionsResponse) {
     option (google.api.http).get = "/zeta-chain/emissions/show_available_emissions/{address}";
