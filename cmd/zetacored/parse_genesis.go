@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"unsafe"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
@@ -85,10 +83,10 @@ func ImportDataIntoFile(genDoc *types.GenesisDoc, importFile *types.GenesisDoc, 
 	if err != nil {
 		return err
 	}
-	err = AddSdkState(appState, importAppState, cdc)
-	if err != nil {
-		return err
-	}
+	//err = AddSdkState(appState, importAppState, cdc)
+	//if err != nil {
+	//	return err
+	//}
 	appStateJSON, err := json.Marshal(appState)
 	if err != nil {
 		return fmt.Errorf("failed to marshal application genesis state: %w", err)
@@ -98,18 +96,18 @@ func ImportDataIntoFile(genDoc *types.GenesisDoc, importFile *types.GenesisDoc, 
 }
 
 func AddZetaState(appState map[string]json.RawMessage, importAppState map[string]json.RawMessage, cdc codec.Codec) error {
-	//if err := AddCrossChainState(appState, importAppState, cdc); err != nil {
-	//	return err
-	//}
-	//if err := AddObserverState(appState, importAppState, cdc); err != nil {
-	//	return err
-	//}
-	//if err := AddEmissionsState(appState, importAppState, cdc); err != nil {
-	//	return err
-	//}
-	//if err := AddFungibleState(appState, importAppState, cdc); err != nil {
-	//	return err
-	//}
+	if err := AddCrossChainState(appState, importAppState, cdc); err != nil {
+		return err
+	}
+	if err := AddObserverState(appState, importAppState, cdc); err != nil {
+		return err
+	}
+	if err := AddEmissionsState(appState, importAppState, cdc); err != nil {
+		return err
+	}
+	if err := AddFungibleState(appState, importAppState, cdc); err != nil {
+		return err
+	}
 	//if err := AddAuthorityState(appState, importAppState, cdc); err != nil {
 	//	return err
 	//}
@@ -153,45 +151,45 @@ func AddStakingState(appState map[string]json.RawMessage, importAppState map[str
 }
 
 func AddDistributionState(appState map[string]json.RawMessage, importAppState map[string]json.RawMessage, cdc codec.Codec) error {
-	var importedDistributionGenState distributiontypes.GenesisState
-	fmt.Println("importAppState: ", unsafe.Sizeof(importAppState))
-	if importAppState[distributiontypes.ModuleName] == nil {
-		panic("distribution module not found in import file")
-	}
-
-	err := cdc.UnmarshalJSON(appState[distributiontypes.ModuleName], &importedDistributionGenState)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal distribution genesis state: %w", err)
-	}
-	fmt.Println("Number of delegations: ", len(importedDistributionGenState.DelegatorStartingInfos))
-	fmt.Println("genesis: ", importedDistributionGenState.String())
-	importedDistributionStateBz, err := cdc.MarshalJSON(&importedDistributionGenState)
-	if err != nil {
-		return fmt.Errorf("failed to marshal distribution genesis state: %w", err)
-	}
-	appState[distributiontypes.ModuleName] = importedDistributionStateBz
+	//var importedDistributionGenState distributiontypes.GenesisState
+	//fmt.Println("iif err := AddDistributionState(appState, importAppState, cdc); err != nil {\n\t\treturn err\n\t}mportAppState: ", unsafe.Sizeof(importAppState))
+	//if importAppState[distributiontypes.ModuleName] == nil {
+	//	panic("distribution module not found in import file")
+	//}
+	//
+	//err := cdc.UnmarshalJSON(appState[distributiontypes.ModuleName], &importedDistributionGenState)
+	//if err != nil {
+	//	return fmt.Errorf("failed to unmarshal distribution genesis state: %w", err)
+	//}
+	//fmt.Println("Number of delegations: ", len(importedDistributionGenState.DelegatorStartingInfos))
+	//fmt.Println("genesis: ", importedDistributionGenState.String())
+	//importedDistributionStateBz, err := cdc.MarshalJSON(&importedDistributionGenState)
+	//if err != nil {
+	//	return fmt.Errorf("failed to marshal distribution genesis state: %w", err)
+	//}
+	appState[distributiontypes.ModuleName] = importAppState[distributiontypes.ModuleName]
 	return nil
 }
 
 func AddEvmState(appState map[string]json.RawMessage, importAppState map[string]json.RawMessage, cdc codec.Codec) error {
-	var importedEvmGenState evmtypes.GenesisState
-	if importAppState[evmtypes.ModuleName] != nil {
-		err := cdc.UnmarshalJSON(appState[evmtypes.ModuleName], &importedEvmGenState)
-		if err != nil {
-			return fmt.Errorf("failed to unmarshal evm genesis state: %w", err)
-		}
-	}
-
-	err := codectypes.UnpackInterfaces(importedEvmGenState, cdc)
-	if err != nil {
-		return fmt.Errorf("failed to authz grants into upackeder: %w", err)
-	}
-	fmt.Println("Number of accounts: ", len(importedEvmGenState.Accounts))
-	importedEvmStateBz, err := cdc.MarshalJSON(&importedEvmGenState)
-	if err != nil {
-		return fmt.Errorf("failed to marshal evm genesis state: %w", err)
-	}
-	appState[evmtypes.ModuleName] = importedEvmStateBz
+	//var importedEvmGenState evmtypes.GenesisState
+	//if importAppState[evmtypes.ModuleName] != nil {
+	//	err := cdc.UnmarshalJSON(appState[evmtypes.ModuleName], &importedEvmGenState)
+	//	if err != nil {
+	//		return fmt.Errorf("failed to unmarshal evm genesis state: %w", err)
+	//	}
+	//}
+	//
+	//err := codectypes.UnpackInterfaces(importedEvmGenState, cdc)
+	//if err != nil {
+	//	return fmt.Errorf("failed to authz grants into upackeder: %w", err)
+	//}
+	//fmt.Println("Number of accounts: ", len(importedEvmGenState.Accounts))
+	//importedEvmStateBz, err := cdc.MarshalJSON(&importedEvmGenState)
+	//if err != nil {
+	//	return fmt.Errorf("failed to marshal evm genesis state: %w", err)
+	//}
+	appState[evmtypes.ModuleName] = importAppState[evmtypes.ModuleName]
 	return nil
 }
 
