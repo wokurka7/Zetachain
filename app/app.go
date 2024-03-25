@@ -539,26 +539,7 @@ func New(
 	// can do so safely.
 	// NOTE: Cross-chain module must be initialized after observer module, as pending nonces in crosschain needs the tss pubkey from observer module
 	app.mm.SetOrderInitGenesis(
-		authtypes.ModuleName,
-		banktypes.ModuleName,
-		distrtypes.ModuleName,
-		stakingtypes.ModuleName,
-		slashingtypes.ModuleName,
-		govtypes.ModuleName,
-		crisistypes.ModuleName,
-		evmtypes.ModuleName,
-		feemarkettypes.ModuleName,
-		paramstypes.ModuleName,
-		group.ModuleName,
-		genutiltypes.ModuleName,
-		upgradetypes.ModuleName,
-		evidencetypes.ModuleName,
-		vestingtypes.ModuleName,
-		observertypes.ModuleName,
-		crosschaintypes.ModuleName,
-		fungibleModuleTypes.ModuleName,
-		emissionsModuleTypes.ModuleName,
-		authz.ModuleName,
+		InitGenesisModuleList()...,
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
