@@ -22,7 +22,18 @@ service Msg {
 
   rpc AbortStuckCCTX(MsgAbortStuckCCTX) returns (MsgAbortStuckCCTXResponse);
   rpc RefundAbortedCCTX(MsgRefundAbortedCCTX) returns (MsgRefundAbortedCCTXResponse);
+  rpc BurnTokens(MsgBurnTokens) returns (MsgBurnTokensResponse);
 }
+
+message MsgBurnTokens {
+  string creator = 1;
+  int64 chain_id = 2;
+  string amount = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Uint",
+    (gogoproto.nullable) = false
+  ];
+}
+message MsgBurnTokensResponse {}
 
 message MsgCreateTSSVoter {
   string creator = 1;
