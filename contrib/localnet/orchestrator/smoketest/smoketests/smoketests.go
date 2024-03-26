@@ -23,7 +23,7 @@ const (
 	TestEtherDepositAndCallName         = "eth_deposit_and_call"
 	TestDepositEtherLiquidityCapName    = "deposit_eth_liquidity_cap"
 
-	TestBurnZetaTokensName = "cmd_burn_tokens"
+	TestBurnZetaTokensName = "cmd_burn_tokens" // #nosec G101 - not a hardcoded password
 	TestMyTestName         = "my_test"
 
 	TestERC20WithdrawName  = "erc20_withdraw"

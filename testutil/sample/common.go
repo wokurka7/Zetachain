@@ -31,7 +31,7 @@ func PubKeySet() *common.PubKeySet {
 }
 
 func EthHeader() (header1, header2, header3 *ethtypes.Header, err error) {
-	url := "https://rpc.ankr.com/eth_goerli"
+	url := "https://goerli.gateway.tenderly.co"
 	client, err := ethclient.Dial(url)
 	if err != nil {
 		return
@@ -59,7 +59,7 @@ func EthHeader() (header1, header2, header3 *ethtypes.Header, err error) {
 
 func Proof() (txIndex int64, block *ethtypes.Block, header ethtypes.Header, headerRLP []byte, proof *common.Proof, tx *ethtypes.Transaction, err error) {
 	txIndex = int64(9)
-	url := "https://rpc.ankr.com/eth_goerli"
+	url := "https://goerli.gateway.tenderly.co"
 	client, err := ethclient.Dial(url)
 	if err != nil {
 		return

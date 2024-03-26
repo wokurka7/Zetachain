@@ -13,7 +13,7 @@ import (
 )
 
 func TestProofGeneration(t *testing.T) {
-	RPC_URL := "https://rpc.ankr.com/eth_goerli"
+	RPC_URL := "https://goerli.gateway.tenderly.co"
 	client, err := ethclient.Dial(RPC_URL)
 	if err != nil {
 		t.Fatal(err)

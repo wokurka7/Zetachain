@@ -98,7 +98,9 @@ func TestMsgBurnTokens_ValidateBasic(t *testing.T) {
 				Amount:      sdkmath.NewUint(100),
 				BurnAddress: "0x000000000000000000000000000000000000000",
 			},
-			err: require.NoError,
+			err: func(t require.TestingT, err error, i ...interface{}) {
+				require.ErrorIs(t, err, types.ErrInvalidAddress)
+			},
 		},
 
 		{
