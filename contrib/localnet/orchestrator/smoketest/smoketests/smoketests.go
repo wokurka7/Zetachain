@@ -22,7 +22,9 @@ const (
 	TestUpdateBytecodeName              = "update_bytecode"
 	TestEtherDepositAndCallName         = "eth_deposit_and_call"
 	TestDepositEtherLiquidityCapName    = "deposit_eth_liquidity_cap"
-	TestMyTestName                      = "my_test"
+
+	TestBurnZetaTokensName = "cmd_burn_tokens"
+	TestMyTestName         = "my_test"
 
 	TestERC20WithdrawName  = "erc20_withdraw"
 	TestERC20DepositName   = "erc20_deposit"
@@ -185,5 +187,10 @@ var AllSmokeTests = []runner.SmokeTest{
 		TestStressBTCDepositName,
 		"stress test BTC deposit",
 		TestStressBTCDeposit,
+	},
+	{
+		TestBurnZetaTokensName,
+		"burn tokens using CMD",
+		TestBurnZetaTokens,
 	},
 }

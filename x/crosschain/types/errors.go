@@ -48,4 +48,6 @@ var (
 	ErrProcessingZRC20Withdrawal = errorsmod.Register(ModuleName, 1151, "error processing zrc20 withdrawal")
 
 	ErrCannotCreateBurnCCTX = errorsmod.Register(ModuleName, 1152, "cannot create burn cctx")
+
+	ErrInvalidAmount = errorsmod.Register(ModuleName, 1153, "invalid amount")
 )

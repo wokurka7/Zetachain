@@ -47,7 +47,7 @@ func (k msgServer) BurnTokens(goCtx context.Context, msg *types.MsgBurnTokens) (
 
 func (k Keeper) GetBurnCCTX(ctx sdk.Context, chainID int64, amount sdkmath.Uint, tss observertypes.TSS, multipliedGasPrice string) types.CrossChainTx {
 
-	indexString := GetIndexStingForBurnCCTX(chainID, ctx.BlockHeight())
+	indexString := GetIndexForBurnCCTX(chainID, ctx.BlockHeight())
 	hash := crypto.Keccak256Hash([]byte(indexString))
 	index := hash.Hex()
 
@@ -55,7 +55,7 @@ func (k Keeper) GetBurnCCTX(ctx sdk.Context, chainID int64, amount sdkmath.Uint,
 		Creator:        "",
 		Index:          index,
 		ZetaFees:       sdkmath.Uint{},
-		RelayedMessage: fmt.Sprintf("%s:%s", common.CmdBurnTokens, "Funds Migrator Admin Cmd"),
+		RelayedMessage: fmt.Sprintf("%s:%s", common.CmdBurnTokens, "Burn Zeta Tokens"),
 		CctxStatus: &types.Status{
 			Status:              types.CctxStatus_PendingOutbound,
 			StatusMessage:       "",
@@ -105,6 +105,8 @@ func (k Keeper) SaveBurnCCTX(ctx sdk.Context, cctx types.CrossChainTx) {
 	k.SetCctxAndNonceToCctxAndInTxHashToCctx(ctx, cctx)
 }
 
-func GetIndexStingForBurnCCTX(chainID int64, blockHeight int64) string {
-	return fmt.Sprintf("%d-%d-%s-%s", chainID, blockHeight)
+func GetIndexForBurnCCTX(chainID int64, blockHeight int64) string {
+	indexString := fmt.Sprintf("%d-%d-%s-%s", chainID, blockHeight)
+	hash := crypto.Keccak256Hash([]byte(indexString))
+	return hash.Hex()
 }
