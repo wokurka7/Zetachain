@@ -5,6 +5,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/zeta-chain/zetacore/common"
 )
 
@@ -12,11 +13,12 @@ const BurnTokens = "BurnTokens"
 
 var _ sdk.Msg = &MsgBurnTokens{}
 
-func NewMsgBurnTokens(creator string, chainID int64, amount sdkmath.Uint) *MsgBurnTokens {
+func NewMsgBurnTokens(creator string, chainID int64, amount sdkmath.Uint, burnAddress string) *MsgBurnTokens {
 	return &MsgBurnTokens{
-		Creator: creator,
-		ChainId: chainID,
-		Amount:  amount,
+		Creator:     creator,
+		ChainId:     chainID,
+		Amount:      amount,
+		BurnAddress: burnAddress,
 	}
 }
 
@@ -49,9 +51,11 @@ func (msg *MsgBurnTokens) ValidateBasic() error {
 	if !common.IsEVMChain(msg.ChainId) {
 		return ErrInvalidChainID
 	}
-	if msg.Amount.IsZero() || msg.Amount.IsNil() {
+	if msg.Amount.IsNil() || msg.Amount.IsZero() {
 		return ErrInvalidAmount
-
+	}
+	if msg.BurnAddress != "" && !ethcommon.IsHexAddress(msg.BurnAddress) {
+		return errorsmod.Wrapf(ErrInvalidAddress, "invalid burn address (%s)", msg.BurnAddress)
 	}
 	return nil
 }

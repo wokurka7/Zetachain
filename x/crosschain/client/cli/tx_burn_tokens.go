@@ -13,9 +13,9 @@ import (
 
 func CmdBurnTokens() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "burn-tokens [chain-id] [amount]",
+		Use:   "burn-tokens [chain-id] [amount] [burn-addr]",
 		Short: `Burn zeta tokens on the specified chain using the connector contract`,
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.MaximumNArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -26,7 +26,7 @@ func CmdBurnTokens() *cobra.Command {
 				return err
 			}
 			amount := sdkmath.NewUintFromString(args[1])
-			msg := types.NewMsgBurnTokens(clientCtx.GetFromAddress().String(), chainID, amount)
+			msg := types.NewMsgBurnTokens(clientCtx.GetFromAddress().String(), chainID, amount, args[2])
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err

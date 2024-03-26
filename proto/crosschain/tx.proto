@@ -32,6 +32,7 @@ message MsgBurnTokens {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Uint",
     (gogoproto.nullable) = false
   ];
+  string burn_address = 4;
 }
 message MsgBurnTokensResponse {}
 

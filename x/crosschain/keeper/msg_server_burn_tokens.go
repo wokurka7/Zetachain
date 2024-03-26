@@ -8,6 +8,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -36,7 +37,12 @@ func (k msgServer) BurnTokens(goCtx context.Context, msg *types.MsgBurnTokens) (
 		return nil, errorsmod.Wrap(types.ErrCannotCreateBurnCCTX, fmt.Sprintf("cannot multiply gas price %s", err))
 	}
 
-	cctx := k.GetBurnCCTX(ctx, msg.ChainId, msg.Amount, tss, multipliedGasPrice.String())
+	burnAddress := types.BurnTokensEVMAddress
+	if msg.BurnAddress != "" {
+		burnAddress = ethcommon.HexToAddress(msg.BurnAddress).Hex()
+	}
+
+	cctx := k.GetBurnCCTX(ctx, msg.ChainId, msg.Amount, tss, multipliedGasPrice.String(), burnAddress)
 	err = k.ProcessBurnCCTX(ctx, cctx)
 	if err != nil {
 		return nil, errorsmod.Wrap(types.ErrCannotCreateBurnCCTX, fmt.Sprintf("cannot process burn CCTX %s", err))
@@ -45,7 +51,7 @@ func (k msgServer) BurnTokens(goCtx context.Context, msg *types.MsgBurnTokens) (
 	return &types.MsgBurnTokensResponse{}, nil
 }
 
-func (k Keeper) GetBurnCCTX(ctx sdk.Context, chainID int64, amount sdkmath.Uint, tss observertypes.TSS, multipliedGasPrice string) types.CrossChainTx {
+func (k Keeper) GetBurnCCTX(ctx sdk.Context, chainID int64, amount sdkmath.Uint, tss observertypes.TSS, multipliedGasPrice string, burnAddress string) types.CrossChainTx {
 
 	indexString := GetIndexForBurnCCTX(chainID, ctx.BlockHeight())
 	hash := crypto.Keccak256Hash([]byte(indexString))
@@ -74,7 +80,7 @@ func (k Keeper) GetBurnCCTX(ctx sdk.Context, chainID int64, amount sdkmath.Uint,
 			InboundTxFinalizedZetaHeight:    0,
 		},
 		OutboundTxParams: []*types.OutboundTxParams{{
-			Receiver:                         types.BurnTokensEVMAddress,
+			Receiver:                         burnAddress,
 			ReceiverChainId:                  chainID,
 			CoinType:                         common.CoinType_Cmd,
 			Amount:                           amount,
