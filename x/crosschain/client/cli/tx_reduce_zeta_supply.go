@@ -26,7 +26,7 @@ func CmdBurnTokens() *cobra.Command {
 				return err
 			}
 			amount := sdkmath.NewUintFromString(args[1])
-			msg := types.NewMsgBurnTokens(clientCtx.GetFromAddress().String(), chainID, amount, args[2])
+			msg := types.NewMsgReduceZetaSupply(clientCtx.GetFromAddress().String(), chainID, amount, args[2])
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err

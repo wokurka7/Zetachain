@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/zeta-chain/zetacore/common"
 	"github.com/zeta-chain/zetacore/testutil/sample"
@@ -13,12 +14,12 @@ import (
 func TestMsgBurnTokens_ValidateBasic(t *testing.T) {
 	tt := []struct {
 		name string
-		msg  *types.MsgBurnTokens
+		msg  *types.MsgReduceZetaSupply
 		err  require.ErrorAssertionFunc
 	}{
 		{
 			name: "valid message",
-			msg: &types.MsgBurnTokens{
+			msg: &types.MsgReduceZetaSupply{
 				Creator:     sample.AccAddress(),
 				ChainId:     common.GoerliChain().ChainId,
 				Amount:      sdkmath.NewUint(100),
@@ -29,7 +30,7 @@ func TestMsgBurnTokens_ValidateBasic(t *testing.T) {
 
 		{
 			name: "invalid creator address",
-			msg: &types.MsgBurnTokens{
+			msg: &types.MsgReduceZetaSupply{
 				Creator:     "invalid",
 				ChainId:     common.GoerliChain().ChainId,
 				Amount:      sdkmath.NewUint(100),
@@ -42,7 +43,7 @@ func TestMsgBurnTokens_ValidateBasic(t *testing.T) {
 
 		{
 			name: "invalid chain ID",
-			msg: &types.MsgBurnTokens{
+			msg: &types.MsgReduceZetaSupply{
 				Creator: sample.AccAddress(),
 				ChainId: 0,
 				Amount:  sdkmath.NewUint(100),
@@ -54,7 +55,7 @@ func TestMsgBurnTokens_ValidateBasic(t *testing.T) {
 
 		{
 			name: "invalid amount",
-			msg: &types.MsgBurnTokens{
+			msg: &types.MsgReduceZetaSupply{
 				Creator: sample.AccAddress(),
 				ChainId: common.GoerliChain().ChainId,
 				Amount:  sdkmath.NewUint(0),
@@ -66,7 +67,7 @@ func TestMsgBurnTokens_ValidateBasic(t *testing.T) {
 
 		{
 			name: "invalid amount nil",
-			msg: &types.MsgBurnTokens{
+			msg: &types.MsgReduceZetaSupply{
 				Creator: sample.AccAddress(),
 				ChainId: common.GoerliChain().ChainId,
 				Amount:  sdkmath.Uint{},
@@ -78,7 +79,7 @@ func TestMsgBurnTokens_ValidateBasic(t *testing.T) {
 
 		{
 			name: "invalid burn address",
-			msg: &types.MsgBurnTokens{
+			msg: &types.MsgReduceZetaSupply{
 				Creator:     sample.AccAddress(),
 				ChainId:     common.GoerliChain().ChainId,
 				Amount:      sdkmath.NewUint(100),
@@ -91,28 +92,24 @@ func TestMsgBurnTokens_ValidateBasic(t *testing.T) {
 
 		{
 			name: "valid burn address",
-			msg: &types.MsgBurnTokens{
+			msg: &types.MsgReduceZetaSupply{
 				Creator:     sample.AccAddress(),
 				ChainId:     common.GoerliChain().ChainId,
 				Amount:      sdkmath.NewUint(100),
 				BurnAddress: "0x000000000000000000000000000000000000000",
 			},
-			err: func(t require.TestingT, err error, i ...interface{}) {
-				require.ErrorContains(t, err, "invalid burn address")
-			},
+			err: require.NoError,
 		},
 
 		{
 			name: "valid burn address",
-			msg: &types.MsgBurnTokens{
+			msg: &types.MsgReduceZetaSupply{
 				Creator:     sample.AccAddress(),
 				ChainId:     common.GoerliChain().ChainId,
 				Amount:      sdkmath.NewUint(100),
-				BurnAddress: "0xbadbadbadbadbadbadbadbadbadbadbadbadbad",
+				BurnAddress: types.BurnTokensEVMAddress,
 			},
-			err: func(t require.TestingT, err error, i ...interface{}) {
-				require.ErrorContains(t, err, "invalid burn address")
-			},
+			err: require.NoError,
 		},
 	}
 	for _, tc := range tt {
@@ -120,4 +117,54 @@ func TestMsgBurnTokens_ValidateBasic(t *testing.T) {
 			tc.err(t, tc.msg.ValidateBasic())
 		})
 	}
+}
+
+func TestMsgReduceZetaSupply_GetSigners(t *testing.T) {
+	signer := sample.AccAddress()
+	tests := []struct {
+		name   string
+		msg    *types.MsgReduceZetaSupply
+		panics bool
+	}{
+		{
+			name:   "valid signer",
+			msg:    types.NewMsgReduceZetaSupply(signer, 1, sdkmath.OneUint(), ""),
+			panics: false,
+		},
+		{
+			name:   "invalid signer",
+			msg:    types.NewMsgReduceZetaSupply("invalid", 1, sdkmath.OneUint(), ""),
+			panics: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if !tt.panics {
+				signers := tt.msg.GetSigners()
+				require.Equal(t, []sdk.AccAddress{sdk.MustAccAddressFromBech32(signer)}, signers)
+			} else {
+				require.Panics(t, func() {
+					tt.msg.GetSigners()
+				})
+			}
+		})
+	}
+}
+
+func TestMsgReduceZetaSupply_Type(t *testing.T) {
+	msg := types.NewMsgReduceZetaSupply(sample.AccAddress(), 1, sdkmath.OneUint(), "")
+	require.Equal(t, types.ReduceZetaSupply, msg.Type())
+}
+
+func TestMsgReduceZetaSupply_Route(t *testing.T) {
+	msg := types.NewMsgReduceZetaSupply(sample.AccAddress(), 1, sdkmath.OneUint(), "")
+	require.Equal(t, types.RouterKey, msg.Route())
+}
+
+func TestMsgReduceZetaSupply_GetSignBytes(t *testing.T) {
+	msg := types.NewMsgReduceZetaSupply(sample.AccAddress(), 1, sdkmath.OneUint(), "")
+	require.NotPanics(t, func() {
+		msg.GetSignBytes()
+	})
 }

@@ -27,6 +27,25 @@ func (sm *SmokeTestRunner) WaitForMinedCCTX(txHash ethcommon.Hash) {
 	}
 }
 
+// WaitForMinedCCTX waits for a cctx to be mined from a cctxIndex
+func (sm *SmokeTestRunner) WaitForMinedCCTXfromIndex(cctxIndex string) {
+	defer func() {
+		sm.Unlock()
+	}()
+	sm.Lock()
+
+	cctx := utils.WaitCctxsMinedByCctxIndex(sm.Ctx, cctxIndex, sm.CctxClient, sm.Logger)
+	if cctx == nil {
+		panic(fmt.Sprintf("cctx not found, inTxHash: %s", cctxIndex))
+	}
+	if cctx.CctxStatus.Status != types.CctxStatus_OutboundMined {
+		panic(fmt.Sprintf("expected cctx status to be mined; got %s, message: %s",
+			cctx.CctxStatus.Status.String(),
+			cctx.CctxStatus.StatusMessage),
+		)
+	}
+}
+
 // SendZetaOnEvm sends ZETA to an address on EVM
 // this allows the ZETA contract deployer to funds other accounts on EVM
 func (sm *SmokeTestRunner) SendZetaOnEvm(address ethcommon.Address, zetaAmount int64) *ethtypes.Transaction {

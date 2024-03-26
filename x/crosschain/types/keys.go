@@ -28,7 +28,7 @@ const (
 	//TssMigrationGasMultiplierEVM is multiplied to the median gas price to get the gas price for the tss migration . This is done to avoid the tss migration tx getting stuck in the mempool
 	TssMigrationGasMultiplierEVM = "2.5"
 	BurnTokensGasMultiplierEVM   = "1.5"
-	BurnTokensEVMAddress         = "0xbadbadbadbadbadbadbadbadbadbadbadbadbad"
+	BurnTokensEVMAddress         = "0x0BadBAdBAdbADbadbadbadbAdbADbADbAdbADbAD"
 )
 
 func GetProtocolFee() sdk.Uint {

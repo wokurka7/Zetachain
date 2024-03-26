@@ -9,12 +9,12 @@ import (
 	"github.com/zeta-chain/zetacore/common"
 )
 
-const BurnTokens = "BurnTokens"
+const ReduceZetaSupply = "ReduceZetaSupply"
 
-var _ sdk.Msg = &MsgBurnTokens{}
+var _ sdk.Msg = &MsgReduceZetaSupply{}
 
-func NewMsgBurnTokens(creator string, chainID int64, amount sdkmath.Uint, burnAddress string) *MsgBurnTokens {
-	return &MsgBurnTokens{
+func NewMsgReduceZetaSupply(creator string, chainID int64, amount sdkmath.Uint, burnAddress string) *MsgReduceZetaSupply {
+	return &MsgReduceZetaSupply{
 		Creator:     creator,
 		ChainId:     chainID,
 		Amount:      amount,
@@ -22,15 +22,15 @@ func NewMsgBurnTokens(creator string, chainID int64, amount sdkmath.Uint, burnAd
 	}
 }
 
-func (msg *MsgBurnTokens) Route() string {
+func (msg *MsgReduceZetaSupply) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgBurnTokens) Type() string {
-	return BurnTokens
+func (msg *MsgReduceZetaSupply) Type() string {
+	return ReduceZetaSupply
 }
 
-func (msg *MsgBurnTokens) GetSigners() []sdk.AccAddress {
+func (msg *MsgReduceZetaSupply) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
@@ -38,12 +38,12 @@ func (msg *MsgBurnTokens) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-func (msg *MsgBurnTokens) GetSignBytes() []byte {
+func (msg *MsgReduceZetaSupply) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(msg)
 	return sdk.MustSortJSON(bz)
 }
 
-func (msg *MsgBurnTokens) ValidateBasic() error {
+func (msg *MsgReduceZetaSupply) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)

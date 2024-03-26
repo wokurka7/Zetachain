@@ -324,7 +324,7 @@ func (signer *Signer) SignCommandTx(
 
 		return signedTX, nil
 	}
-	if cmd == common.CmdBurnTokens {
+	if cmd == common.CmdReduceZetaSupply {
 		return signer.SignOutboundTx(
 			ethcommon.HexToAddress(cctx.InboundTxParams.Sender),
 			big.NewInt(cctx.InboundTxParams.SenderChainId),
@@ -391,7 +391,7 @@ func (signer *Signer) TryProcessOutTx(
 
 	// Early return if the cctx is already processed
 	nonce := cctx.GetCurrentOutTxParam().OutboundTxTssNonce
-	included, confirmed, err := evmClient.IsSendOutTxProcessed(cctx.Index, nonce, cctx.GetCurrentOutTxParam().CoinType, logger)
+	included, confirmed, err := evmClient.IsSendOutTxProcessed(cctx.Index, nonce, cctx.GetCurrentOutTxParam().CoinType, logger, cctx.RelayedMessage)
 	if err != nil {
 		logger.Error().Err(err).Msg("IsSendOutTxProcessed failed")
 	}

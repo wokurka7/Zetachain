@@ -22,10 +22,10 @@ service Msg {
 
   rpc AbortStuckCCTX(MsgAbortStuckCCTX) returns (MsgAbortStuckCCTXResponse);
   rpc RefundAbortedCCTX(MsgRefundAbortedCCTX) returns (MsgRefundAbortedCCTXResponse);
-  rpc BurnTokens(MsgBurnTokens) returns (MsgBurnTokensResponse);
+  rpc ReduceZetaSupply(MsgReduceZetaSupply) returns (MsgReduceZetaSupplyResponse);
 }
 
-message MsgBurnTokens {
+message MsgReduceZetaSupply {
   string creator = 1;
   int64 chain_id = 2;
   string amount = 3 [
@@ -34,7 +34,7 @@ message MsgBurnTokens {
   ];
   string burn_address = 4;
 }
-message MsgBurnTokensResponse {}
+message MsgReduceZetaSupplyResponse {}
 
 message MsgCreateTSSVoter {
   string creator = 1;

@@ -495,7 +495,7 @@ func (ob *BTCChainClient) ConfirmationsThreshold(amount *big.Int) int64 {
 }
 
 // IsSendOutTxProcessed returns isIncluded(or inMempool), isConfirmed, Error
-func (ob *BTCChainClient) IsSendOutTxProcessed(sendHash string, nonce uint64, _ common.CoinType, logger zerolog.Logger) (bool, bool, error) {
+func (ob *BTCChainClient) IsSendOutTxProcessed(sendHash string, nonce uint64, _ common.CoinType, logger zerolog.Logger, _ string) (bool, bool, error) {
 	outTxID := ob.GetTxID(nonce)
 	logger.Info().Msgf("IsSendOutTxProcessed %s", outTxID)
 

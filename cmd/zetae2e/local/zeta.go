@@ -59,11 +59,11 @@ func zetaTestRoutine(
 		// run zeta test
 		if err := zetaRunner.RunSmokeTestsFromNames(
 			smoketests.AllSmokeTests,
+			smoketests.TestBurnZetaTokensName,
 			smoketests.TestZetaWithdrawName,
 			smoketests.TestMessagePassingName,
 			smoketests.TestMessagePassingRevertFailName,
 			smoketests.TestMessagePassingRevertSuccessName,
-			smoketests.TestBurnZetaTokensName,
 		); err != nil {
 			return fmt.Errorf("zeta tests failed: %v", err)
 		}

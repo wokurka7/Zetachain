@@ -17,7 +17,7 @@ import (
 	observertypes "github.com/zeta-chain/zetacore/x/observer/types"
 )
 
-func (k msgServer) BurnTokens(goCtx context.Context, msg *types.MsgBurnTokens) (*types.MsgBurnTokensResponse, error) {
+func (k msgServer) ReduceZetaSupply(goCtx context.Context, msg *types.MsgReduceZetaSupply) (*types.MsgReduceZetaSupplyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if msg.Creator != k.zetaObserverKeeper.GetParams(ctx).GetAdminPolicyAccount(observertypes.Policy_Type_group2) {
 		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "Update can only be executed by the correct policy account")
@@ -42,26 +42,24 @@ func (k msgServer) BurnTokens(goCtx context.Context, msg *types.MsgBurnTokens) (
 		burnAddress = ethcommon.HexToAddress(msg.BurnAddress).Hex()
 	}
 
-	cctx := k.GetBurnCCTX(ctx, msg.ChainId, msg.Amount, tss, multipliedGasPrice.String(), burnAddress)
-	err = k.ProcessBurnCCTX(ctx, cctx)
+	cctx := GetCmdCCTX(ctx, msg.ChainId, msg.Amount, tss, multipliedGasPrice.String(), burnAddress)
+	err = k.ProcessCmdCCTX(ctx, cctx)
 	if err != nil {
 		return nil, errorsmod.Wrap(types.ErrCannotCreateBurnCCTX, fmt.Sprintf("cannot process burn CCTX %s", err))
 	}
-	k.SaveBurnCCTX(ctx, cctx)
-	return &types.MsgBurnTokensResponse{}, nil
+	k.SaveCmdCCTX(ctx, cctx)
+	return &types.MsgReduceZetaSupplyResponse{}, nil
 }
 
-func (k Keeper) GetBurnCCTX(ctx sdk.Context, chainID int64, amount sdkmath.Uint, tss observertypes.TSS, multipliedGasPrice string, burnAddress string) types.CrossChainTx {
-
-	indexString := GetIndexForBurnCCTX(chainID, ctx.BlockHeight())
-	hash := crypto.Keccak256Hash([]byte(indexString))
-	index := hash.Hex()
+func GetCmdCCTX(ctx sdk.Context, chainID int64, amount sdkmath.Uint, tss observertypes.TSS, multipliedGasPrice string, burnAddress string) types.CrossChainTx {
+	height := ctx.BlockHeight()
+	index := GetIndexForReduceZetaSupplyCMD(chainID, height)
 
 	cctx := types.CrossChainTx{
 		Creator:        "",
 		Index:          index,
 		ZetaFees:       sdkmath.Uint{},
-		RelayedMessage: fmt.Sprintf("%s:%s", common.CmdBurnTokens, "Burn Zeta Tokens"),
+		RelayedMessage: fmt.Sprintf("%s:%s", common.CmdReduceZetaSupply, "Burn Zeta Tokens"),
 		CctxStatus: &types.Status{
 			Status:              types.CctxStatus_PendingOutbound,
 			StatusMessage:       "",
@@ -77,7 +75,7 @@ func (k Keeper) GetBurnCCTX(ctx sdk.Context, chainID int64, amount sdkmath.Uint,
 			InboundTxObservedHash:           tmbytes.HexBytes(tmtypes.Tx(ctx.TxBytes()).Hash()).String(),
 			InboundTxObservedExternalHeight: 0,
 			InboundTxBallotIndex:            "",
-			InboundTxFinalizedZetaHeight:    0,
+			InboundTxFinalizedZetaHeight:    uint64(height),
 		},
 		OutboundTxParams: []*types.OutboundTxParams{{
 			Receiver:                         burnAddress,
@@ -85,7 +83,7 @@ func (k Keeper) GetBurnCCTX(ctx sdk.Context, chainID int64, amount sdkmath.Uint,
 			CoinType:                         common.CoinType_Cmd,
 			Amount:                           amount,
 			OutboundTxTssNonce:               0,
-			OutboundTxGasLimit:               common.EVMSend,
+			OutboundTxGasLimit:               1_000_000,
 			OutboundTxGasPrice:               multipliedGasPrice,
 			OutboundTxHash:                   "",
 			OutboundTxBallotIndex:            "",
@@ -99,7 +97,7 @@ func (k Keeper) GetBurnCCTX(ctx sdk.Context, chainID int64, amount sdkmath.Uint,
 	return cctx
 }
 
-func (k Keeper) ProcessBurnCCTX(ctx sdk.Context, cctx types.CrossChainTx) error {
+func (k Keeper) ProcessCmdCCTX(ctx sdk.Context, cctx types.CrossChainTx) error {
 	err := k.UpdateNonce(ctx, cctx.GetCurrentOutTxParam().ReceiverChainId, &cctx)
 	if err != nil {
 		return err
@@ -107,12 +105,12 @@ func (k Keeper) ProcessBurnCCTX(ctx sdk.Context, cctx types.CrossChainTx) error 
 	return nil
 }
 
-func (k Keeper) SaveBurnCCTX(ctx sdk.Context, cctx types.CrossChainTx) {
+func (k Keeper) SaveCmdCCTX(ctx sdk.Context, cctx types.CrossChainTx) {
 	k.SetCctxAndNonceToCctxAndInTxHashToCctx(ctx, cctx)
 }
 
-func GetIndexForBurnCCTX(chainID int64, blockHeight int64) string {
-	indexString := fmt.Sprintf("%d-%d-%s-%s", chainID, blockHeight)
+func GetIndexForReduceZetaSupplyCMD(chainID int64, blockHeight int64) string {
+	indexString := fmt.Sprintf("%d-%d", chainID, blockHeight)
 	hash := crypto.Keccak256Hash([]byte(indexString))
 	return hash.Hex()
 }
