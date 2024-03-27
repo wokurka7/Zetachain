@@ -23,8 +23,8 @@ const (
 	TestEtherDepositAndCallName         = "eth_deposit_and_call"
 	TestDepositEtherLiquidityCapName    = "deposit_eth_liquidity_cap"
 
-	TestBurnZetaTokensName = "cmd_burn_tokens" // #nosec G101 - not a hardcoded password
-	TestMyTestName         = "my_test"
+	TestAdjustZetaSupplyName = "cmd_adjust_zeta_supply" // #nosec G101 - not a hardcoded password
+	TestMyTestName           = "my_test"
 
 	TestERC20WithdrawName  = "erc20_withdraw"
 	TestERC20DepositName   = "erc20_deposit"
@@ -189,8 +189,8 @@ var AllSmokeTests = []runner.SmokeTest{
 		TestStressBTCDeposit,
 	},
 	{
-		TestBurnZetaTokensName,
+		TestAdjustZetaSupplyName,
 		"burn tokens using CMD",
-		TestBurnZetaTokens,
+		TestAdjustZetaSupply,
 	},
 }
