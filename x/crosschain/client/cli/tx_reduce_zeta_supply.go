@@ -13,7 +13,7 @@ import (
 
 func CmdBurnTokens() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "burn-tokens [chain-id] [amount] [burn-addr]",
+		Use:   "burn-tokens [chain-id] [amount] [optional-burn-addr]",
 		Short: `Burn zeta tokens on the specified chain using the connector contract`,
 		Args:  cobra.MaximumNArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {

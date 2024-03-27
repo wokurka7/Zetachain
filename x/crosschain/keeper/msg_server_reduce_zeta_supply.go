@@ -58,13 +58,14 @@ func (k msgServer) ReduceZetaSupply(goCtx context.Context, msg *types.MsgReduceZ
 // GetCmdCCTX returns a new CrossChainTx for of Cointype Cmd which is used to reduce the Zeta supply on external chains
 func GetCmdCCTX(ctx sdk.Context, chainID int64, amount sdkmath.Uint, tss observertypes.TSS, multipliedGasPrice string, burnAddress string) types.CrossChainTx {
 	height := ctx.BlockHeight()
+	// use chainID and height to create a unique index for the CCTX.
 	index := GetIndexForReduceZetaSupplyCMD(chainID, height)
 
 	cctx := types.CrossChainTx{
 		Creator:        "",
 		Index:          index,
 		ZetaFees:       sdkmath.Uint{},
-		RelayedMessage: fmt.Sprintf("%s:%s", common.CmdReduceZetaSupply, "Burn Zeta Tokens"),
+		RelayedMessage: fmt.Sprintf("%s:%s", common.CmdReduceZetaSupply, fmt.Sprintf("Reduce Zeta supply on chain %d by %s", chainID, amount.String())),
 		CctxStatus: &types.Status{
 			Status:              types.CctxStatus_PendingOutbound,
 			StatusMessage:       "",
