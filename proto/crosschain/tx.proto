@@ -22,7 +22,19 @@ service Msg {
 
   rpc AbortStuckCCTX(MsgAbortStuckCCTX) returns (MsgAbortStuckCCTXResponse);
   rpc RefundAbortedCCTX(MsgRefundAbortedCCTX) returns (MsgRefundAbortedCCTXResponse);
+  rpc ReduceZetaSupply(MsgReduceZetaSupply) returns (MsgReduceZetaSupplyResponse);
 }
+
+message MsgReduceZetaSupply {
+  string creator = 1;
+  int64 chain_id = 2;
+  string amount = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Uint",
+    (gogoproto.nullable) = false
+  ];
+  string burn_address = 4;
+}
+message MsgReduceZetaSupplyResponse {}
 
 message MsgCreateTSSVoter {
   string creator = 1;

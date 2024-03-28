@@ -59,6 +59,7 @@ func zetaTestRoutine(
 		// run zeta test
 		if err := zetaRunner.RunSmokeTestsFromNames(
 			smoketests.AllSmokeTests,
+			smoketests.TestAdjustZetaSupplyName,
 			smoketests.TestZetaWithdrawName,
 			smoketests.TestMessagePassingName,
 			smoketests.TestMessagePassingRevertFailName,

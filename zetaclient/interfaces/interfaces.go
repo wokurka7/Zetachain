@@ -37,7 +37,7 @@ const (
 type ChainClient interface {
 	Start()
 	Stop()
-	IsSendOutTxProcessed(sendHash string, nonce uint64, cointype common.CoinType, logger zerolog.Logger) (bool, bool, error)
+	IsSendOutTxProcessed(sendHash string, nonce uint64, cointype common.CoinType, logger zerolog.Logger, relayedMessage string) (bool, bool, error)
 	SetChainParams(observertypes.ChainParams)
 	GetChainParams() observertypes.ChainParams
 	GetPromGauge(name string) (prometheus.Gauge, error)

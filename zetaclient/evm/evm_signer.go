@@ -277,11 +277,14 @@ func (signer *Signer) SignCommandTx(
 	cmd string,
 	params string,
 	to ethcommon.Address,
-	outboundParams *types.OutboundTxParams,
+	cctx types.CrossChainTx,
 	gasLimit uint64,
 	gasPrice *big.Int,
 	height uint64,
+	message []byte,
+	sendhash [32]byte,
 ) (*ethtypes.Transaction, error) {
+	outboundParams := cctx.GetCurrentOutTxParam()
 	if cmd == common.CmdWhitelistERC20 {
 		erc20 := ethcommon.HexToAddress(params)
 		if erc20 == (ethcommon.Address{}) {
@@ -320,6 +323,21 @@ func (signer *Signer) SignCommandTx(
 		}
 
 		return signedTX, nil
+	}
+	// if the admin command is to reduce the zeta supply, sign the outbound tx to send zeta tokens from the connector to the provided address
+	if cmd == common.CmdReduceZetaSupply {
+		return signer.SignOutboundTx(
+			ethcommon.HexToAddress(cctx.InboundTxParams.Sender),
+			big.NewInt(cctx.InboundTxParams.SenderChainId),
+			to,
+			outboundParams.Amount.BigInt(),
+			gasLimit,
+			message,
+			sendhash,
+			cctx.GetCurrentOutTxParam().OutboundTxTssNonce,
+			gasPrice,
+			height,
+		)
 	}
 
 	return nil, fmt.Errorf("SignCommandTx: unknown command %s", cmd)
@@ -374,7 +392,7 @@ func (signer *Signer) TryProcessOutTx(
 
 	// Early return if the cctx is already processed
 	nonce := cctx.GetCurrentOutTxParam().OutboundTxTssNonce
-	included, confirmed, err := evmClient.IsSendOutTxProcessed(cctx.Index, nonce, cctx.GetCurrentOutTxParam().CoinType, logger)
+	included, confirmed, err := evmClient.IsSendOutTxProcessed(cctx.Index, nonce, cctx.GetCurrentOutTxParam().CoinType, logger, cctx.RelayedMessage)
 	if err != nil {
 		logger.Error().Err(err).Msg("IsSendOutTxProcessed failed")
 	}
@@ -464,7 +482,7 @@ func (signer *Signer) TryProcessOutTx(
 			logger.Error().Msgf("invalid message %s", msg)
 			return
 		}
-		tx, err = signer.SignCommandTx(msg[0], msg[1], to, cctx.GetCurrentOutTxParam(), gasLimit, gasprice, height)
+		tx, err = signer.SignCommandTx(msg[0], msg[1], to, *cctx, gasLimit, gasprice, height, message, sendhash)
 	} else if cctx.InboundTxParams.SenderChainId == zetaBridge.ZetaChain().ChainId && cctx.CctxStatus.Status == types.CctxStatus_PendingOutbound && flags.IsOutboundEnabled {
 		if cctx.GetCurrentOutTxParam().CoinType == common.CoinType_Gas {
 			logger.Info().Msgf("SignWithdrawTx: %d => %s, nonce %d, gasprice %d", cctx.InboundTxParams.SenderChainId, toChain, cctx.GetCurrentOutTxParam().OutboundTxTssNonce, gasprice)

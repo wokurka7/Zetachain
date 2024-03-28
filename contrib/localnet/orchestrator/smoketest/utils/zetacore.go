@@ -138,3 +138,57 @@ func WaitForBlockHeight(
 		}
 	}
 }
+
+func WaitCctxsMinedByCctxIndex(
+	ctx context.Context,
+	cctxIndex string,
+	cctxClient crosschaintypes.QueryClient,
+	logger infoLogger,
+) *crosschaintypes.CrossChainTx {
+	cctx := &crosschaintypes.CrossChainTx{}
+	startTime := time.Now()
+	timeout := DefaultCctxTimeout
+	// fetch cctx by cctxIndex
+	for i := 0; ; i++ {
+		time.Sleep(1 * time.Second)
+		if time.Since(startTime) > timeout {
+			return cctx
+		}
+		res, err := cctxClient.Cctx(ctx, &crosschaintypes.QueryGetCctxRequest{
+			Index: cctxIndex,
+		})
+		if err != nil {
+			// prevent spamming logs
+			if i%10 == 0 {
+				logger.Info("Error getting cctx by inTxHash: %s", err.Error())
+			}
+			continue
+		}
+		if res.CrossChainTx == nil {
+			// prevent spamming logs
+			if i%10 == 0 {
+				logger.Info(
+					"cctx not found by cctxIndex: %s",
+					cctxIndex,
+				)
+			}
+			continue
+		}
+
+		cctx = res.CrossChainTx
+		if !IsTerminalStatus(cctx.CctxStatus.Status) {
+			// prevent spamming logs
+			if i%10 == 0 {
+				logger.Info(
+					"waiting for cctx index %d to be mined by inTxHash: %s, cctx status: %s, message: %s",
+					cctxIndex,
+					cctx.InboundTxParams.InboundTxObservedHash,
+					cctx.CctxStatus.Status.String(),
+					cctx.CctxStatus.StatusMessage,
+				)
+			}
+			continue
+		}
+		return cctx
+	}
+}

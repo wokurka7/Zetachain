@@ -98,7 +98,7 @@ func (sm *SmokeTestRunner) DepositERC20WithAmountAndMessage(amount *big.Int, msg
 	sm.Logger.Info("USDT Approve receipt tx hash: %s", tx.Hash().Hex())
 
 	tx, err = sm.ERC20Custody.Deposit(sm.GoerliAuth, sm.DeployerAddress.Bytes(), sm.USDTERC20Addr, amount, msg)
-	sm.Logger.Print("TX: %v", tx)
+	sm.Logger.Info("TX: %v", tx)
 	if err != nil {
 		panic(err)
 	}
