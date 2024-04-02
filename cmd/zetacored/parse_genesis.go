@@ -49,14 +49,14 @@ var Copy = map[string]bool{
 	fungibleModuleTypes.ModuleName:  true,
 	emissionsModuleTypes.ModuleName: true,
 	authz.ModuleName:                true,
+	distributiontypes.ModuleName:    true,
 }
 var Skip = map[string]bool{
-	evmtypes.ModuleName:          true,
-	stakingtypes.ModuleName:      true,
-	banktypes.ModuleName:         true,
-	distributiontypes.ModuleName: true,
-	genutiltypes.ModuleName:      true,
-	authtypes.ModuleName:         true,
+	evmtypes.ModuleName:     true,
+	stakingtypes.ModuleName: true,
+	genutiltypes.ModuleName: true,
+	authtypes.ModuleName:    true,
+	banktypes.ModuleName:    true,
 }
 
 var Modify = map[string]bool{
@@ -72,11 +72,11 @@ func CmdParseGenesisFile() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			cdc := clientCtx.Codec
-			genesisFilePAth := filepath.Join(app.DefaultNodeHome, "config", "genesis.json")
+			genesisFilePath := filepath.Join(app.DefaultNodeHome, "config", "genesis.json")
 			if len(args) == 2 {
-				genesisFilePAth = args[1]
+				genesisFilePath = args[1]
 			}
-			genDoc, err := GetGenDoc(genesisFilePAth)
+			genDoc, err := GetGenDoc(genesisFilePath)
 			importData, err := GetGenDoc(args[0])
 
 			err = ImportDataIntoFile(genDoc, importData, cdc)
@@ -84,7 +84,7 @@ func CmdParseGenesisFile() *cobra.Command {
 				return err
 			}
 
-			err = genutil.ExportGenesisFile(genDoc, genesisFilePAth)
+			err = genutil.ExportGenesisFile(genDoc, genesisFilePath)
 			if err != nil {
 				return err
 			}
