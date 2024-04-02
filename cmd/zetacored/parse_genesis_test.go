@@ -3,17 +3,23 @@ package main_test
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/types"
 	"github.com/zeta-chain/zetacore/app"
 	zetacored "github.com/zeta-chain/zetacore/cmd/zetacored"
 	keepertest "github.com/zeta-chain/zetacore/testutil/keeper"
 	"github.com/zeta-chain/zetacore/testutil/sample"
 	crosschaintypes "github.com/zeta-chain/zetacore/x/crosschain/types"
+	emissionstypes "github.com/zeta-chain/zetacore/x/emissions/types"
 	observertypes "github.com/zeta-chain/zetacore/x/observer/types"
 )
 
@@ -52,14 +58,65 @@ func Test_ModifyCrossChainState(t *testing.T) {
 }
 
 func Test_ImportDataIntoFile(t *testing.T) {
+	setCosmosConfig()
+	cdc := keepertest.NewCodec()
+	genDoc := sample.GenDoc(t)
+	importGenDoc := ImportGenDoc(t, cdc, 100)
 
+	err := zetacored.ImportDataIntoFile(genDoc, importGenDoc, cdc)
+	require.NoError(t, err)
+
+	appState, err := genutiltypes.GenesisStateFromGenDoc(*genDoc)
+	require.NoError(t, err)
+
+	// Crosschain module is in Modify list
+	crosschainStateAfterImport := crosschaintypes.GetGenesisStateFromAppState(cdc, appState)
+	require.Len(t, crosschainStateAfterImport.CrossChainTxs, 10)
+	require.Len(t, crosschainStateAfterImport.InTxHashToCctxList, 10)
+	require.Len(t, crosschainStateAfterImport.FinalizedInbounds, 10)
+
+	// Bank module is in Skip list
+	var bankStateAfterImport banktypes.GenesisState
+	if appState[banktypes.ModuleName] != nil {
+		err := cdc.UnmarshalJSON(appState[banktypes.ModuleName], &bankStateAfterImport)
+		if err != nil {
+			panic(fmt.Sprintf("Failed to get genesis state from app state: %s", err.Error()))
+		}
+	}
+	// 4 balances were present in the original genesis state
+	require.Len(t, bankStateAfterImport.Balances, 4)
+
+	// Emissions module is in Copy list
+	var emissionStateAfterImport emissionstypes.GenesisState
+	if appState[emissionstypes.ModuleName] != nil {
+		err := cdc.UnmarshalJSON(appState[emissionstypes.ModuleName], &emissionStateAfterImport)
+		if err != nil {
+			panic(fmt.Sprintf("Failed to get genesis state from app state: %s", err.Error()))
+		}
+	}
+	require.Len(t, emissionStateAfterImport.WithdrawableEmissions, 100)
 }
 
-func ImportGenDoc(t *testing.T, cdc *codec.ProtoCodec, n int) {
+func Test_GetGenDoc(t *testing.T) {
+	t.Run("successfully get genesis doc from file", func(t *testing.T) {
+		fp := filepath.Join(os.TempDir(), "genesis.json")
+		err := genutil.ExportGenesisFile(sample.GenDoc(t), fp)
+		require.NoError(t, err)
+		_, err = zetacored.GetGenDoc(fp)
+		require.NoError(t, err)
+	})
+	t.Run("fail to get genesis doc from file", func(t *testing.T) {
+		_, err := zetacored.GetGenDoc("test")
+		require.ErrorContains(t, err, "no such file or directory")
+	})
+}
+
+func ImportGenDoc(t *testing.T, cdc *codec.ProtoCodec, n int) *types.GenesisDoc {
 	importGenDoc := sample.GenDoc(t)
 	importStateJson, err := json.Marshal(GetImportData(t, cdc, n))
 	require.NoError(t, err)
 	importGenDoc.AppState = importStateJson
+	return importGenDoc
 }
 
 func GetImportData(t *testing.T, cdc *codec.ProtoCodec, n int) map[string]json.RawMessage {
@@ -95,6 +152,23 @@ func GetImportData(t *testing.T, cdc *codec.ProtoCodec, n int) map[string]json.R
 	importedObserverStateBz, err := cdc.MarshalJSON(&importedObserverGenState)
 	require.NoError(t, err)
 	importData[observertypes.ModuleName] = importedObserverStateBz
+
+	// Add emission data to genesis state
+	var importedEmissionGenesis emissionstypes.GenesisState
+	if importData[emissionstypes.ModuleName] != nil {
+		err := cdc.UnmarshalJSON(importData[emissionstypes.ModuleName], &importedEmissionGenesis)
+		if err != nil {
+			panic(fmt.Sprintf("Failed to get genesis state from app state: %s", err.Error()))
+		}
+	}
+	withdrawableEmissions := make([]emissionstypes.WithdrawableEmissions, n)
+	for i := 0; i < n; i++ {
+		withdrawableEmissions[i] = sample.WithdrawableEmissions(t)
+	}
+	importedEmissionGenesis.WithdrawableEmissions = withdrawableEmissions
+	importedEmissionGenesisBz, err := cdc.MarshalJSON(&importedEmissionGenesis)
+	require.NoError(t, err)
+	importData[emissionstypes.ModuleName] = importedEmissionGenesisBz
 
 	// Add bank data to genesis state
 	var importedBankGenesis banktypes.GenesisState
