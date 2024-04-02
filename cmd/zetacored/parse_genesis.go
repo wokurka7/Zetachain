@@ -39,7 +39,6 @@ var Copy = map[string]bool{
 	slashingtypes.ModuleName:        true,
 	govtypes.ModuleName:             true,
 	crisistypes.ModuleName:          true,
-	evmtypes.ModuleName:             true,
 	feemarkettypes.ModuleName:       true,
 	paramstypes.ModuleName:          true,
 	group.ModuleName:                true,
@@ -49,14 +48,14 @@ var Copy = map[string]bool{
 	fungibleModuleTypes.ModuleName:  true,
 	emissionsModuleTypes.ModuleName: true,
 	authz.ModuleName:                true,
-	distributiontypes.ModuleName:    true,
 }
 var Skip = map[string]bool{
-	evmtypes.ModuleName:     true,
-	stakingtypes.ModuleName: true,
-	genutiltypes.ModuleName: true,
-	authtypes.ModuleName:    true,
-	banktypes.ModuleName:    true,
+	evmtypes.ModuleName:          true,
+	stakingtypes.ModuleName:      true,
+	genutiltypes.ModuleName:      true,
+	authtypes.ModuleName:         true,
+	banktypes.ModuleName:         true,
+	distributiontypes.ModuleName: true,
 }
 
 var Modify = map[string]bool{

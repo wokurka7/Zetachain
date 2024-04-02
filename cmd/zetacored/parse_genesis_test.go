@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 	"github.com/zeta-chain/zetacore/app"
 	zetacored "github.com/zeta-chain/zetacore/cmd/zetacored"
@@ -25,7 +26,7 @@ func Test_ModifyCrossChainState(t *testing.T) {
 	setCosmosConfig()
 	t.Run("successfully modify cross chain state to reduce data", func(t *testing.T) {
 		cdc := keepertest.NewCodec()
-		appState := sample.AppState()
+		appState := sample.AppState(t)
 		importData := GetImportData(t, cdc, 100)
 		err := zetacored.ModifyCrossChainState(appState, importData, cdc)
 		require.NoError(t, err)
@@ -38,7 +39,7 @@ func Test_ModifyCrossChainState(t *testing.T) {
 
 	t.Run("successfully modify cross chain state without changing data when not needed", func(t *testing.T) {
 		cdc := keepertest.NewCodec()
-		appState := sample.AppState()
+		appState := sample.AppState(t)
 		importData := GetImportData(t, cdc, 8)
 		err := zetacored.ModifyCrossChainState(appState, importData, cdc)
 		require.NoError(t, err)
@@ -50,9 +51,21 @@ func Test_ModifyCrossChainState(t *testing.T) {
 	})
 }
 
-func GetImportData(t *testing.T, cdc *codec.ProtoCodec, n int) map[string]json.RawMessage {
-	importData := sample.AppState()
+func Test_ImportDataIntoFile(t *testing.T) {
 
+}
+
+func ImportGenDoc(t *testing.T, cdc *codec.ProtoCodec, n int) {
+	importGenDoc := sample.GenDoc(t)
+	importStateJson, err := json.Marshal(GetImportData(t, cdc, n))
+	require.NoError(t, err)
+	importGenDoc.AppState = importStateJson
+}
+
+func GetImportData(t *testing.T, cdc *codec.ProtoCodec, n int) map[string]json.RawMessage {
+	importData := sample.AppState(t)
+
+	// Add crosschain data to genesis state
 	importedCrossChainGenState := crosschaintypes.GetGenesisStateFromAppState(cdc, importData)
 	cctxList := make([]*crosschaintypes.CrossChainTx, n)
 	intxHashToCctxList := make([]crosschaintypes.InTxHashToCctx, n)
@@ -69,6 +82,7 @@ func GetImportData(t *testing.T, cdc *codec.ProtoCodec, n int) map[string]json.R
 	require.NoError(t, err)
 	importData[crosschaintypes.ModuleName] = importedCrossChainStateBz
 
+	// Add observer data to genesis state
 	importedObserverGenState := observertypes.GetGenesisStateFromAppState(cdc, importData)
 	ballots := make([]*observertypes.Ballot, n)
 	nonceToCctx := make([]observertypes.NonceToCctx, n)
@@ -81,6 +95,29 @@ func GetImportData(t *testing.T, cdc *codec.ProtoCodec, n int) map[string]json.R
 	importedObserverStateBz, err := cdc.MarshalJSON(&importedObserverGenState)
 	require.NoError(t, err)
 	importData[observertypes.ModuleName] = importedObserverStateBz
+
+	// Add bank data to genesis state
+	var importedBankGenesis banktypes.GenesisState
+	if importData[banktypes.ModuleName] != nil {
+		err := cdc.UnmarshalJSON(importData[banktypes.ModuleName], &importedBankGenesis)
+		if err != nil {
+			panic(fmt.Sprintf("Failed to get genesis state from app state: %s", err.Error()))
+		}
+	}
+	balances := make([]banktypes.Balance, n)
+	supply := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.ZeroInt()))
+	for i := 0; i < n; i++ {
+		balances[i] = banktypes.Balance{
+			Address: sample.AccAddress(),
+			Coins:   sample.Coins(),
+		}
+		supply = supply.Add(balances[i].Coins...)
+	}
+	importedBankGenesis.Balances = balances
+	importedBankGenesis.Supply = supply
+	importedBankGenesisBz, err := cdc.MarshalJSON(&importedBankGenesis)
+	require.NoError(t, err)
+	importData[banktypes.ModuleName] = importedBankGenesisBz
 
 	return importData
 }
