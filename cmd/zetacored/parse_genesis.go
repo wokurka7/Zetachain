@@ -41,7 +41,6 @@ var Copy = map[string]bool{
 	crisistypes.ModuleName:          true,
 	feemarkettypes.ModuleName:       true,
 	paramstypes.ModuleName:          true,
-	group.ModuleName:                true,
 	upgradetypes.ModuleName:         true,
 	evidencetypes.ModuleName:        true,
 	vestingtypes.ModuleName:         true,
@@ -56,6 +55,7 @@ var Skip = map[string]bool{
 	authtypes.ModuleName:         true,
 	banktypes.ModuleName:         true,
 	distributiontypes.ModuleName: true,
+	group.ModuleName:             true,
 }
 
 var Modify = map[string]bool{
@@ -154,14 +154,19 @@ func ModifyCrossChainState(appState map[string]json.RawMessage, importAppState m
 
 func ModifyObserverState(appState map[string]json.RawMessage, importAppState map[string]json.RawMessage, cdc codec.Codec) error {
 	importedObserverGenState := observertypes.GetGenesisStateFromAppState(cdc, importAppState)
-	importedObserverGenState.Ballots = importedObserverGenState.Ballots[:10]
-	importedObserverGenState.NonceToCctx = importedObserverGenState.NonceToCctx[:10]
-	importedObserverStateBz, err := cdc.MarshalJSON(&importedObserverGenState)
+	importedObserverGenState.Ballots = importedObserverGenState.Ballots[:math.Min(10, len(importedObserverGenState.Ballots))]
+	importedObserverGenState.NonceToCctx = importedObserverGenState.NonceToCctx[:math.Min(10, len(importedObserverGenState.NonceToCctx))]
+
+	currentGenState := observertypes.GetGenesisStateFromAppState(cdc, appState)
+	currentGenState.Ballots = importedObserverGenState.Ballots
+	currentGenState.NonceToCctx = importedObserverGenState.NonceToCctx
+
+	currentGenStateBz, err := cdc.MarshalJSON(&currentGenState)
 	if err != nil {
 		return fmt.Errorf("failed to marshal observer genesis state: %w", err)
 	}
 
-	appState[observertypes.ModuleName] = importedObserverStateBz
+	appState[observertypes.ModuleName] = currentGenStateBz
 	return nil
 }
 
