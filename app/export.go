@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -29,8 +30,15 @@ func (app *App) ExportAppStateAndValidators(
 		height = 0
 		app.prepForZeroHeightGenesis(ctx, jailAllowedAddrs)
 	}
+	modifiedMM := app.mm
+	for i, m := range modifiedMM.OrderExportGenesis {
+		if m == evmtypes.ModuleName {
+			modifiedMM.OrderExportGenesis = append(modifiedMM.OrderExportGenesis[:i], modifiedMM.OrderExportGenesis[i+1:]...)
+			break
+		}
+	}
 
-	genState := app.mm.ExportGenesis(ctx, app.appCodec)
+	genState := modifiedMM.ExportGenesis(ctx, app.appCodec)
 	appState, err := json.MarshalIndent(genState, "", "  ")
 	if err != nil {
 		return servertypes.ExportedApp{}, err
