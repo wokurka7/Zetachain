@@ -55,36 +55,71 @@ func validatePeer(seedPeer string) error {
 //
 //	other fields can be added.
 func maskCfg(cfg config.Config) string {
-	maskedCfg := cfg
-
-	maskedCfg.BitcoinConfig = config.BTCConfig{
-		RPCUsername: cfg.BitcoinConfig.RPCUsername,
-		RPCPassword: cfg.BitcoinConfig.RPCPassword,
-		RPCHost:     cfg.BitcoinConfig.RPCHost,
-		RPCParams:   cfg.BitcoinConfig.RPCParams,
+	//Perform deep copy to avoid modifying original config
+	maskedCfg := config.Config{
+		Peer:                cfg.Peer,
+		PublicIP:            cfg.PublicIP,
+		LogFormat:           cfg.LogFormat,
+		LogLevel:            cfg.LogLevel,
+		LogSampler:          cfg.LogSampler,
+		PreParamsPath:       cfg.PreParamsPath,
+		ZetaCoreHome:        cfg.ZetaCoreHome,
+		ChainID:             cfg.ChainID,
+		ZetaCoreURL:         cfg.ZetaCoreURL,
+		AuthzGranter:        cfg.AuthzGranter,
+		AuthzHotkey:         cfg.AuthzHotkey,
+		P2PDiagnostic:       cfg.P2PDiagnostic,
+		ConfigUpdateTicker:  cfg.ConfigUpdateTicker,
+		P2PDiagnosticTicker: cfg.P2PDiagnosticTicker,
+		TssPath:             cfg.TssPath,
+		TestTssKeysign:      cfg.TestTssKeysign,
+		KeyringBackend:      cfg.KeyringBackend,
+		HsmMode:             cfg.HsmMode,
+		HsmHotKey:           cfg.HsmHotKey,
 	}
+
+	endpoints := make([]config.BTCEndpoint, len(cfg.BitcoinConfig.Endpoints))
+	copy(endpoints, cfg.BitcoinConfig.Endpoints)
+	maskedCfg.BitcoinConfig = config.BTCConfig{
+		Endpoints: endpoints,
+	}
+
+	restrictedAddresses := make([]string, len(cfg.ComplianceConfig.RestrictedAddresses))
+	copy(restrictedAddresses, cfg.ComplianceConfig.RestrictedAddresses)
+	maskedCfg.ComplianceConfig = config.ComplianceConfig{
+		LogPath:             cfg.ComplianceConfig.LogPath,
+		RestrictedAddresses: restrictedAddresses,
+	}
+
 	maskedCfg.EVMChainConfigs = map[int64]config.EVMConfig{}
 	for key, val := range cfg.EVMChainConfigs {
+		endpoints := make([]string, len(val.Endpoints))
+		copy(endpoints, val.Endpoints)
+
 		maskedCfg.EVMChainConfigs[key] = config.EVMConfig{
-			Chain:    val.Chain,
-			Endpoint: val.Endpoint,
+			Chain:     val.Chain,
+			Endpoints: endpoints,
 		}
 	}
 
 	// Mask Sensitive data
 	for _, chain := range maskedCfg.EVMChainConfigs {
-		if chain.Endpoint == "" {
+		if len(chain.Endpoints) == 0 {
 			continue
 		}
-		endpointURL, err := url.Parse(chain.Endpoint)
-		if err != nil {
-			continue
+		for i, endpoint := range chain.Endpoints {
+			endpointURL, err := url.Parse(endpoint)
+			if err != nil {
+				continue
+			}
+			chain.Endpoints[i] = endpointURL.Hostname()
 		}
-		chain.Endpoint = endpointURL.Hostname()
 	}
 
-	maskedCfg.BitcoinConfig.RPCUsername = ""
-	maskedCfg.BitcoinConfig.RPCPassword = ""
+	for i := range maskedCfg.BitcoinConfig.Endpoints {
+		maskedCfg.BitcoinConfig.Endpoints[i].RPCUsername = ""
+		maskedCfg.BitcoinConfig.Endpoints[i].RPCPassword = ""
+	}
 
 	return maskedCfg.String()
 }

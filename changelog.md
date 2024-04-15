@@ -41,6 +41,7 @@
 * [1935](https://github.com/zeta-chain/node/pull/1935) - add an operational authority group
 * [1954](https://github.com/zeta-chain/node/pull/1954) - add metric for concurrent keysigns
 * [2006](https://github.com/zeta-chain/node/pull/2006) - add Amoy testnet static chain information
+* [1998](https://github.com/zeta-chain/node/pull/1998) - zetaclient multiple rpc endpoint support
 
 ### Tests
 

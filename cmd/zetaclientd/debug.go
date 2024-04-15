@@ -8,11 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/btcsuite/btcd/rpcclient"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/onrik/ethrpc"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/zeta-chain/zetacore/pkg/chains"
@@ -102,18 +99,15 @@ func DebugCmd() *cobra.Command {
 				}
 				ob.WithZetaClient(bridge)
 				ob.WithLogger(chainLogger)
-				var ethRPC *ethrpc.EthRPC
-				var client *ethclient.Client
+				var client *evm.EthClientFallback
 				coinType := coin.CoinType_Cmd
 				for chain, evmConfig := range cfg.GetAllEVMConfigs() {
 					if chainID == chain {
-						ethRPC = ethrpc.NewEthRPC(evmConfig.Endpoint)
-						client, err = ethclient.Dial(evmConfig.Endpoint)
+						client, err = evm.NewEthClientFallback(evmConfig, chainLogger)
 						if err != nil {
 							return err
 						}
 						ob.WithEvmClient(client)
-						ob.WithEvmJSONRPC(ethRPC)
 						ob.WithChain(*chains.GetChainFromChainID(chainID))
 					}
 				}
@@ -182,16 +176,7 @@ func DebugCmd() *cobra.Command {
 				obBtc.WithZetaClient(bridge)
 				obBtc.WithLogger(chainLogger)
 				obBtc.WithChain(*chains.GetChainFromChainID(chainID))
-				connCfg := &rpcclient.ConnConfig{
-					Host:         cfg.BitcoinConfig.RPCHost,
-					User:         cfg.BitcoinConfig.RPCUsername,
-					Pass:         cfg.BitcoinConfig.RPCPassword,
-					HTTPPostMode: true,
-					DisableTLS:   true,
-					Params:       cfg.BitcoinConfig.RPCParams,
-				}
-
-				btcClient, err := rpcclient.New(connCfg, nil)
+				btcClient, err := bitcoin.NewRPCClientFallback(cfg.BitcoinConfig, chainLogger)
 				if err != nil {
 					return err
 				}

@@ -18,6 +18,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 	"github.com/zeta-chain/zetacore/pkg/chains"
 	clientcommon "github.com/zeta-chain/zetacore/zetaclient/common"
@@ -247,8 +248,14 @@ func createTestClientWithUTXOs(t *testing.T) *BTCChainClient {
 
 func TestAddWithdrawTxOutputs(t *testing.T) {
 	// Create test signer and receiver address
-	signer, err := NewBTCSigner(config.BTCConfig{}, stub.NewTSSMainnet(), clientcommon.DefaultLoggers(), &metrics.TelemetryServer{}, nil)
-	require.NoError(t, err)
+	signer := BTCSigner{
+		tssSigner:        stub.NewTSSMainnet(),
+		rpcClient:        setupBTCFallbackClient(),
+		logger:           zerolog.Logger{},
+		loggerCompliance: zerolog.Logger{},
+		ts:               &metrics.TelemetryServer{},
+		coreContext:      nil,
+	}
 
 	// tss address and script
 	tssAddr := signer.tssSigner.BTCAddressWitnessPubkeyHash()
@@ -626,6 +633,6 @@ func TestNewBTCSigner(t *testing.T) {
 		clientcommon.DefaultLoggers(),
 		&metrics.TelemetryServer{},
 		corecontext.NewZetaCoreContext(cfg))
-	require.NoError(t, err)
-	require.NotNil(t, btcSigner)
+	require.ErrorContains(t, err, "invalid endpoints")
+	require.Nil(t, btcSigner)
 }

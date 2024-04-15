@@ -3,6 +3,7 @@ package bitcoin
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"math"
 	"math/big"
 	"path"
@@ -479,6 +480,7 @@ func TestGetSenderAddressByVinErrors(t *testing.T) {
 	t.Run("should return error when RPC client fails to get raw tx", func(t *testing.T) {
 		// create mock rpc client without preloaded tx
 		rpcClient := stub.NewMockBTCRPCClient()
+		rpcClient.WithError(errors.New("no transaction found"))
 		txVin := btcjson.Vin{Txid: txHash, Vout: 2}
 		sender, err := GetSenderAddressByVin(rpcClient, txVin, net)
 		require.ErrorContains(t, err, "error getting raw transaction")
@@ -705,6 +707,7 @@ func TestGetBtcEventErrors(t *testing.T) {
 		// load tx and leave rpc client without preloaded tx
 		tx := testutils.LoadBTCIntxRawResult(t, chain.ChainId, txHash, false)
 		rpcClient := stub.NewMockBTCRPCClient()
+		rpcClient.WithError(errors.New("error getting raw tx"))
 
 		// get BTC event
 		event, err := GetBtcEvent(rpcClient, *tx, tssAddress, blockNumber, log.Logger, net, depositorFee)
