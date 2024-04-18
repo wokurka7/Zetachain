@@ -28,6 +28,10 @@ service Query {
   rpc ShowAvailableEmissions(QueryShowAvailableEmissionsRequest) returns (QueryShowAvailableEmissionsResponse) {
     option (google.api.http).get = "/zeta-chain/emissions/show_available_emissions/{address}";
   }
+  // Queries a list of ShowAvailableEmissions items.
+  rpc ListUnWithdrawnEmissions(QueryListUnWithdrawnEmissionsRequest) returns (QueryListUnWithdrawnEmissionsResponse) {
+    option (google.api.http).get = "/zeta-chain/emissions/list_unwithdrawn_emissions";
+  }
 
   // this line is used by starport scaffolding # 2
 }
@@ -62,6 +66,11 @@ message QueryShowAvailableEmissionsRequest {
 }
 
 message QueryShowAvailableEmissionsResponse {
+  string amount = 1;
+}
+
+message QueryListUnWithdrawnEmissionsRequest {}
+message QueryListUnWithdrawnEmissionsResponse {
   string amount = 1;
 }
 
