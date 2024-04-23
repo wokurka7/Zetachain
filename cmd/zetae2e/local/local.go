@@ -95,6 +95,7 @@ func NewLocalCmd() *cobra.Command {
 }
 
 func localE2ETest(cmd *cobra.Command, _ []string) {
+
 	// fetch flags
 	waitForHeight, err := cmd.Flags().GetInt64(flagWaitForHeight)
 	if err != nil {
@@ -137,6 +138,11 @@ func localE2ETest(cmd *cobra.Command, _ []string) {
 	testStartTime := time.Now()
 	logger.Print("starting E2E tests")
 
+	if !skipSetup {
+		logger.Print("⏳ wait 210s for genesis")
+		time.Sleep(6 * time.Minute)
+	}
+
 	if testAdmin {
 		logger.Print("⚠️ admin tests enabled")
 	}
@@ -167,10 +173,6 @@ func localE2ETest(cmd *cobra.Command, _ []string) {
 
 	// wait for Genesis
 	// if setup is skipp, we assume that the genesis is already created
-	if !skipSetup {
-		logger.Print("⏳ wait 70s for genesis")
-		time.Sleep(70 * time.Second)
-	}
 
 	// initialize deployer runner with config
 	deployerRunner, err := zetae2econfig.RunnerFromConfig(

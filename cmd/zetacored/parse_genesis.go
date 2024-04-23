@@ -46,7 +46,6 @@ var Copy = map[string]bool{
 	vestingtypes.ModuleName:         true,
 	fungibleModuleTypes.ModuleName:  true,
 	emissionsModuleTypes.ModuleName: true,
-	authz.ModuleName:                true,
 }
 var Skip = map[string]bool{
 	evmtypes.ModuleName:          true,
@@ -56,6 +55,7 @@ var Skip = map[string]bool{
 	banktypes.ModuleName:         true,
 	distributiontypes.ModuleName: true,
 	group.ModuleName:             true,
+	authz.ModuleName:             true,
 }
 
 var Modify = map[string]bool{
