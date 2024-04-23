@@ -35,6 +35,7 @@ services:
       - "9091:9091"
     volumes:
       - zetacored_data_mainnet:/root/.zetacored/
+      - ../../../contrib/docker-scripts/start.sh:/scripts/start.sh
     entrypoint: bash /scripts/start.sh
     #for debugging
     #entrypoint: ["/bin/sh", "-c"]
