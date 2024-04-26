@@ -30,6 +30,7 @@ const (
 	flagSetupOnly         = "setup-only"
 	flagSkipSetup         = "skip-setup"
 	flagSkipBitcoinSetup  = "skip-bitcoin-setup"
+	flagTestMigration     = "test-migration"
 )
 
 var (
@@ -57,6 +58,7 @@ func NewLocalCmd() *cobra.Command {
 	cmd.Flags().String(flagConfigOut, "", "config file to write the deployed contracts from the setup")
 	cmd.Flags().Bool(flagSkipSetup, false, "set to true to skip setup")
 	cmd.Flags().Bool(flagSkipBitcoinSetup, false, "set to true to skip bitcoin wallet setup")
+	cmd.Flags().Bool(flagTestMigration, true, "set to true to run migration tests")
 
 	return cmd
 }
@@ -108,6 +110,10 @@ func localE2ETest(cmd *cobra.Command, _ []string) {
 		panic(err)
 	}
 	skipBitcoinSetup, err := cmd.Flags().GetBool(flagSkipBitcoinSetup)
+	if err != nil {
+		panic(err)
+	}
+	testMigration, err := cmd.Flags().GetBool(flagTestMigration)
 	if err != nil {
 		panic(err)
 	}
@@ -177,6 +183,10 @@ func localE2ETest(cmd *cobra.Command, _ []string) {
 	// if setup is skipped, we assume that the keygen is already completed
 	if !skipSetup {
 		waitKeygenHeight(ctx, deployerRunner.CctxClient, logger)
+	}
+
+	if testMigration {
+		setupSecondTss(ctx, deployerRunner)
 	}
 
 	// query and set the TSS

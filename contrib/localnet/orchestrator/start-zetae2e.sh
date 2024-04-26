@@ -104,8 +104,11 @@ else
 
   # Run the e2e tests normally
 
-  echo "running e2e tests..."
 
+  echo "setting up client restart at upgrade height"
+  /work/restart-zetaclientd-at-upgrade.sh -u 80 -n 2 &
+
+  echo "running e2e tests"
   eval "zetae2e $ZETAE2E_CMD"
   ZETAE2E_EXIT_CODE=$?
 

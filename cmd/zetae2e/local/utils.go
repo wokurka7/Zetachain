@@ -15,6 +15,7 @@ import (
 	"github.com/zeta-chain/zetacore/e2e/runner"
 	"github.com/zeta-chain/zetacore/e2e/utils"
 	crosschaintypes "github.com/zeta-chain/zetacore/x/crosschain/types"
+	observertypes "github.com/zeta-chain/zetacore/x/observer/types"
 )
 
 // GetConfig returns config from file from the command line flag
@@ -99,4 +100,15 @@ func waitKeygenHeight(
 		}
 		logger.Info("Last ZetaHeight: %d", response.Height)
 	}
+}
+
+func setupSecondTss(ctx context.Context, r *runner.E2ERunner) {
+	msg := observertypes.NewMsgUpdateKeygen(r.ZetaTxServer.GetAccountAddress(0), 100)
+	res, err := r.ZetaTxServer.BroadcastTx(utils.FungibleAdminName, msg)
+	if err != nil {
+		panic(err)
+	}
+	r.Logger.Print("update keygen tx hash: %s", res.TxHash)
+	r.Logger.Print("⏳ wait height 100 for keygen to be completed")
+	time.Sleep(5 * time.Hour)
 }
