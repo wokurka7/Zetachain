@@ -16,7 +16,7 @@ import (
 
 // ListPendingCctxWithinRateLimit returns a list of pending cctxs that do not exceed the outbound rate limit
 // a limit for the number of cctxs to return can be specified or the default is MaxPendingCctxs
-func (k Keeper) ListPendingCctxWithinRateLimit(c context.Context, req *types.QueryListPendingCctxWithinRateLimitRequest) (*types.QueryListPendingCctxWithinRateLimitResponse, error) {
+func (k Keeper) ListPendingCctxWithinRateLimit(c context.Context, req *types.QueryListPendingCctxWithinRateLimitRequest) (res *types.QueryListPendingCctxWithinRateLimitResponse, err error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -88,7 +88,7 @@ func (k Keeper) ListPendingCctxWithinRateLimit(c context.Context, req *types.Que
 		foreignCoinMap = k.fungibleKeeper.GetAllForeignCoinMap(ctx)
 
 		// convert the rate limit from aZETA to ZETA
-		blockLimitInZeta = sdk.NewDecFromBigInt(rateLimitFlags.Rate.BigInt()).Quo(sdk.NewDec(10).Power(18))
+		blockLimitInZeta = sdk.NewDecFromBigInt(rateLimitFlags.Rate.BigInt())
 		windowLimitInZeta = blockLimitInZeta.Mul(sdk.NewDec(rateLimitFlags.Window))
 	}
 
@@ -107,16 +107,16 @@ func (k Keeper) ListPendingCctxWithinRateLimit(c context.Context, req *types.Que
 	// query pending nonces for each foreign chain and get the lowest height of the pending cctxs
 	// Note: The pending nonces could change during the RPC call, so query them beforehand
 	lowestPendingCctxHeight := int64(0)
-	pendingNoncesMap := make(map[int64]*observertypes.PendingNonces)
+	pendingNoncesMap := make(map[int64]observertypes.PendingNonces)
 	for _, chain := range chains {
 		pendingNonces, found := k.GetObserverKeeper().GetPendingNonces(ctx, tss.TssPubkey, chain.ChainId)
 		if !found {
 			return nil, status.Error(codes.Internal, "pending nonces not found")
 		}
+		pendingNoncesMap[chain.ChainId] = pendingNonces
 
 		// insert pending nonces and update lowest height
 		if pendingNonces.NonceLow < pendingNonces.NonceHigh {
-			pendingNoncesMap[chain.ChainId] = &pendingNonces
 			cctx, err := getCctxByChainIDAndNonce(k, ctx, tss.TssPubkey, chain.ChainId, pendingNonces.NonceLow)
 			if err != nil {
 				return nil, err
@@ -190,12 +190,12 @@ func (k Keeper) ListPendingCctxWithinRateLimit(c context.Context, req *types.Que
 
 	// query forwards for pending cctxs for each foreign chain
 	for _, chain := range chains {
-		// query the pending cctxs in range [NonceLow, NonceHigh)
 		pendingNonces := pendingNoncesMap[chain.ChainId]
 
 		// #nosec G701 always in range
 		totalPending += uint64(pendingNonces.NonceHigh - pendingNonces.NonceLow)
 
+		// query the pending cctxs in range [NonceLow, NonceHigh)
 		for nonce := pendingNonces.NonceLow; nonce < pendingNonces.NonceHigh; nonce++ {
 			cctx, err := getCctxByChainIDAndNonce(k, ctx, tss.TssPubkey, chain.ChainId, nonce)
 			if err != nil {
@@ -232,7 +232,7 @@ func (k Keeper) ListPendingCctxWithinRateLimit(c context.Context, req *types.Que
 		CrossChainTx:          cctxs,
 		TotalPending:          totalPending,
 		CurrentWithdrawWindow: withdrawWindow,
-		CurrentWithdrawRate:   totalWithdrawInZeta.Mul(sdk.NewDec(10).Power(18)).Quo(sdk.NewDec(withdrawWindow)).String(),
+		CurrentWithdrawRate:   totalWithdrawInZeta.Quo(sdk.NewDec(withdrawWindow)).String(),
 		RateLimitExceeded:     limitExceeded,
 	}, nil
 }
@@ -251,7 +251,7 @@ func ConvertCctxValue(
 	case coin.CoinType_Zeta:
 		// no conversion needed for ZETA
 		amountCctx := sdk.NewDecFromBigInt(cctx.GetCurrentOutTxParam().Amount.BigInt())
-		return amountCctx.Quo(sdk.NewDec(10).Power(18))
+		return amountCctx
 	case coin.CoinType_Gas:
 		rate = gasCoinRates[chainID]
 	case coin.CoinType_ERC20:
@@ -295,6 +295,7 @@ func ConvertCctxValue(
 	amountCctx := sdk.NewDecFromBigInt(cctx.GetCurrentOutTxParam().Amount.BigInt())
 	amountZrc20 := amountCctx.Mul(rate)
 	amountZeta := amountZrc20.Quo(oneZrc20)
+
 	return amountZeta
 }
 
