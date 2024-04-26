@@ -1,29 +1,32 @@
 version: '3.8'
 services:
-  zetachain_athens3_rpc:
+  zetachain_mainnet_rpc:
     platform: linux/amd64
-    image: zetachain/zetacored:${DOCKER_TAG:-ubuntu-v14.0.1.0}
+    build:
+      context: ../../..
+      dockerfile: Dockerfile
+    container_name: zetachain_mainnet_rpc
     environment:
       DAEMON_HOME: "/root/.zetacored"
-      NETWORK: athens3
+      NETWORK: mainnet
       RESTORE_TYPE: "snapshot"
       SNAPSHOT_API: https://snapshots.zetachain.com
       TRUST_HEIGHT_DIFFERENCE_STATE_SYNC: 40000
-      CHAIN_ID: "athens_7001-1"
+      CHAIN_ID: "zetachain_7000-1"
       VISOR_NAME: "cosmovisor"
       DAEMON_NAME: "zetacored"
       DAEMON_ALLOW_DOWNLOAD_BINARIES: "false"
-      DAEMON_RESTART_AFTER_UPGRADE: "true"
+      DAEMON_RESTART_AFTER_UPGRADE: "false"
       UNSAFE_SKIP_BACKUP: "true"
       CLIENT_DAEMON_NAME: "zetaclientd"
       CLIENT_DAEMON_ARGS: ""
       CLIENT_SKIP_UPGRADE: "true"
       CLIENT_START_PROCESS: "false"
-      MONIKER: testnet-docker-rpc
+      MONIKER: mainnet-docker-rpc
       #If this is true it will erase everything and start over from scratch.
       RE_DO_START_SEQUENCE: "false"
       #If this is true it will build the dockerfile and use binary from built docker file instead of remote docker image for local development testing on non-governance upgrades.
-      IS_LOCAL_DEVELOPMENT: "false"
+      IS_LOCAL_DEVELOPMENT: "true"
     ports:
       - "26656:26656"
       - "1317:1317"
@@ -33,7 +36,11 @@ services:
       - "9090:9090"
       - "9091:9091"
     volumes:
-      - zetacored_data_athens3:/root/.zetacored/
+      - zetacored_data_mainnet:/root/.zetacored/
+      - ../../../contrib/docker-scripts/start.sh:/scripts/start.sh
     entrypoint: bash /scripts/start.sh
+    #for debugging
+    #entrypoint: ["/bin/sh", "-c"]
+    #command: ["while true; do sleep 86400; done"]
 volumes:
-  zetacored_data_athens3:
+  zetacored_data_mainnet:
